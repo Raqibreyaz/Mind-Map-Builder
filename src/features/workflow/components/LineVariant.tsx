@@ -1,9 +1,18 @@
-import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
 
 export const LineVariant = ({
   data,
 }: {
-  data: { name: string; execution_time: number }[];
+  data: { name: string; label: string; execution_time: number }[];
 }) => {
   return (
     <ResponsiveContainer className={"w-full h-full"}>
@@ -13,9 +22,13 @@ export const LineVariant = ({
         <Tooltip />
         <Legend />
         <CartesianGrid stroke="#eee" />
-        <Line type="monotone" dataKey="execution_time" stroke="#10b981" strokeWidth={3} />
+        <Line
+          type="monotone"
+          dataKey="execution_time"
+          stroke="#10b981"
+          strokeWidth={3}
+        />
       </LineChart>
     </ResponsiveContainer>
   );
 };
-

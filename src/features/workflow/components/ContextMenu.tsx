@@ -6,9 +6,10 @@ import {
 } from "@/components/ui/popover";
 
 import { useCallback } from "react";
-import { useReactFlow } from "@xyflow/react";
+import { useReactFlow,Node } from "@xyflow/react";
 import { createNode, validateNodes } from "../utils/nodes.utils";
 import { useEditNode } from "../state/use-edit-node";
+import { useUndoRedo } from "../hooks/useUndoRedo";
 import { Button } from "@/components/ui/button";
 
 interface ContextMenuProps {
@@ -28,6 +29,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   const nodeId = useEditNode((state) => state.nodeId);
   const setOpen = useEditNode((state) => state.setOpen);
   const { getNode, setNodes, setEdges, getEdges } = useReactFlow();
+  const { addChange, onNodeDelete } = useUndoRedo();
 
   // get the node label and position to duplicate the node
 
@@ -41,12 +43,14 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
     setNodes((prevNodeState) =>
       validateNodes(prevNodeState.concat(newNode), getEdges())
     );
+    addChange({ type: "add", node: newNode });
   }, [nodeId, getNode, setNodes]);
 
   // remove the node with edge
   const deleteNode = useCallback(() => {
-    setNodes((nodes) => nodes.filter((node) => node.id !== nodeId));
-    setEdges((edges) => edges.filter((edge) => edge.source !== nodeId));
+    // setNodes((nodes) => nodes.filter((node) => node.id !== nodeId));
+    // setEdges((edges) => edges.filter((edge) => edge.source !== nodeId));
+    onNodeDelete(getNode(nodeId as string) as Node);
     open.current = false;
   }, [nodeId, setNodes, setEdges]);
 

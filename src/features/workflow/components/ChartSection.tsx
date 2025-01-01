@@ -18,13 +18,14 @@ import {
 
 export const ChartSection = memo(({ nodes }: { nodes: Node[] }) => {
   const [chartType, setChartType] = useState<string>("bar");
-
-  const data = nodes.map((node) => ({
-    name: node.data.name as string,
-    execution_time: node.data.execution_time as number,
-    label: node.data.label as string,
-  }));
-  console.log(data);
+  // only consider the task and decision nodes , exclude the start and end nodes
+  const data = nodes
+    .filter((node) => node.data.label !== "start" && node.data.label !== "end")
+    .map((node) => ({
+      name: node.data.name as string,
+      execution_time: node.data.execution_time as number,
+      label: node.data.label as string,
+    }));
   const RenderChart = useCallback(
     ({ chartType }: { chartType: string }) => {
       switch (chartType) {
@@ -47,11 +48,12 @@ export const ChartSection = memo(({ nodes }: { nodes: Node[] }) => {
     >
       <div className="mb-2 ml-2">
         <p className="text-green-400">
-          *{
+          *
+          {
             {
               bar: "Execution Time for each node",
               pie: "Distribution of Execution time by Node type",
-              line: "",
+              line: "Cummulative Execution time",
             }[chartType]
           }
         </p>
@@ -67,7 +69,7 @@ export const ChartSection = memo(({ nodes }: { nodes: Node[] }) => {
               { name: "pie", icon: <PieChartIcon className="size-4" /> },
               { name: "line", icon: <LineChartIcon className="size-4" /> },
             ].map(({ name, icon }) => (
-              <SelectItem value={name}>
+              <SelectItem key={name} value={name}>
                 <div className="flex gap-x-5">
                   <p className="capitalize">{name}</p>
                   <p>{icon}</p>

@@ -50,3 +50,4 @@ export const createNode = (nodeType: string, position: XYPosition) => {
     targetPosition: nodeType !== "start" ? Position.Top : undefined,
   };
 };
+

@@ -39,8 +39,12 @@ export function SaveWorkflow() {
 
   return (
     <div>
-      <Button onClick={handleSaveChanges} className="text-wrap w-full max-sm:text-xs" variant={"secondary"}>
-        Save Workflow
+      <Button
+        onClick={handleSaveChanges}
+        className="text-wrap w-full max-sm:text-xs"
+        size={"sm"}
+      >
+        Save
       </Button>
     </div>
   );

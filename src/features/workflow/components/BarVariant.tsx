@@ -14,7 +14,6 @@ export const BarVariant = ({
 }: {
   data: { name: string; execution_time: number }[];
 }) => {
-  console.log(data);
   return (
     <ResponsiveContainer className={"w-full h-full"}>
       <BarChart data={data}>

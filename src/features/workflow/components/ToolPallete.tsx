@@ -1,6 +1,6 @@
 import { Panel } from "@xyflow/react";
 import { useNodeType } from "@/features/workflow/hooks/useNodeType";
-import React from "react";
+import React, { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -8,6 +8,8 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 import { SaveWorkflow } from "@/features/workflow/components/SaveWorkflow";
+import { ImportFromJson } from "@/features/workflow/components/ImportFromJson";
+import { ExportToJson } from "@/features/workflow/components/ExportToJson";
 import { Settings } from "lucide-react";
 
 type NodeTypes = "start" | "end" | "task" | "decision";
@@ -15,10 +17,13 @@ type NodeTypes = "start" | "end" | "task" | "decision";
 export const ToolPallete = function () {
   const [_, setType] = useNodeType();
 
-  const onDragStart = (event: React.DragEvent, nodeType: NodeTypes) => {
-    setType?.(nodeType);
-    event.dataTransfer.effectAllowed = "move";
-  };
+  const onDragStart = useCallback(
+    (event: React.DragEvent, nodeType: NodeTypes) => {
+      setType?.(nodeType);
+      event.dataTransfer.effectAllowed = "move";
+    },
+    [setType]
+  );
 
   return (
     <Panel
@@ -37,6 +42,7 @@ export const ToolPallete = function () {
           {nodeType}
         </Button>
       ))}
+      <SaveWorkflow />
       <Popover>
         <PopoverTrigger>
           <div className="cursor-pointer mx-auto inline-block border p-2 rounded-md bg-gray-200 ">
@@ -45,9 +51,8 @@ export const ToolPallete = function () {
         </PopoverTrigger>
         <PopoverContent className="w-50 p-2">
           <div className="flex flex-col gap-3">
-            <Button variant={"secondary"} className="max-sm:text-xs p-0">Export to Json</Button>
-            <Button variant={"secondary"} className="max-sm:text-xs p-0">Import from Json</Button>
-            <SaveWorkflow />
+            <ImportFromJson />
+            <ExportToJson />
           </div>
         </PopoverContent>
       </Popover>

@@ -14,6 +14,7 @@ import {
   useNodesState,
   useReactFlow,
 } from "@xyflow/react";
+
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ToolPallete } from "@/features/workflow/components/ToolPallete";
 import {
@@ -35,6 +36,8 @@ import { ContextMenu } from "@/features/workflow/components/ContextMenu";
 import { EditNodeForm } from "@/features/workflow/components/EditNodeForm";
 import { useEditNode } from "./state/use-edit-node";
 import { ChartSection } from "./components/ChartSection";
+import { useUndoRedo } from "./hooks/useUndoRedo";
+import { UndoRedo } from "./components/UndoRedo";
 
 function DnDFlow() {
   const ref = useRef(null);
@@ -43,6 +46,7 @@ function DnDFlow() {
   const setNodeId = useEditNode((state) => state.setNodeId);
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
+  const { addChange } = useUndoRedo();
   const [menu, setMenu] = useState<{
     top: number | undefined;
     left: number | undefined;
@@ -52,7 +56,6 @@ function DnDFlow() {
 
   const { screenToFlowPosition } = useReactFlow();
   const [nodeType, setNodeType] = useNodeType();
-
   // make the selected node draggable
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -78,6 +81,7 @@ function DnDFlow() {
       // adding new node
       setNodes((nds) => validateNodes(nds.concat(newNode), edges));
       setNodeType(null);
+      addChange({ type: "add", node: newNode });
     },
     [screenToFlowPosition, nodeType]
   );
@@ -86,6 +90,7 @@ function DnDFlow() {
   const onConnect = useCallback(
     (connection: Connection) => {
       setEdges((prevEdgeState) => addEdge(connection, prevEdgeState));
+      addChange({ type: "add", edge: connection });
     },
     [setEdges]
   );
@@ -100,6 +105,7 @@ function DnDFlow() {
     (oldEdge: Edge, newConnection: Connection) => {
       edgeReconnectSuccessful.current = true;
       setEdges((els) => reconnectEdge(oldEdge, newConnection, els));
+      addChange({ type: "add", edge: newConnection });
     },
     [setEdges]
   );
@@ -108,6 +114,7 @@ function DnDFlow() {
   const onReconnectEnd = useCallback(
     (_: any, edge: Edge) => {
       if (!edgeReconnectSuccessful.current) {
+        addChange({ type: "delete", edge });
         setEdges((eds) => eds.filter((e) => e.id !== edge.id));
       }
       edgeReconnectSuccessful.current = true;
@@ -195,6 +202,7 @@ function DnDFlow() {
       >
         <ToolPallete />
         <Background />
+        <UndoRedo />
         <Controls />
         {menu && <ContextMenu {...menu} />}
       </ReactFlow>
