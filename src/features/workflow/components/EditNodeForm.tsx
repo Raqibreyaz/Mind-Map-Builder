@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { memo, useCallback, useMemo } from "react";
+import { memo, useCallback, useEffect, useMemo } from "react";
 
 export const EditNodeForm = memo(() => {
   const { open, nodeId, setOpen, setNodeId } = useEditNode();
@@ -41,12 +41,14 @@ export const EditNodeForm = memo(() => {
 
   // memoising the node
   const node = useMemo(() => getNode(nodeId ?? ""), [nodeId, getNode]);
+  console.log(node);
   const form = useForm<editNodeSchemaType>({
-    defaultValues: {
-      label: node?.data.label as string,
-      execution_time: node?.data.execution_time as number,
-    },
     resolver: zodResolver(EditNodeSchema),
+    defaultValues: {
+      label: (node?.data.label ?? "") as string, // Fallback to empty string if undefined
+      execution_time: (node?.data.execution_time ?? 0) as number, // Fallback to 0
+      name: (node?.data.name ?? "") as string, // Fallback to empty string
+    },
   });
 
   // update the node
@@ -64,6 +66,15 @@ export const EditNodeForm = memo(() => {
     },
     [setNodes, setOpen, nodeId]
   );
+
+  useEffect(() => {
+    if (node)
+      form.reset({
+        label: node?.data.label as string,
+        execution_time: node?.data.execution_time as number,
+        name: node.data.name as string,
+      });
+  }, [node]);
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -85,8 +96,8 @@ export const EditNodeForm = memo(() => {
                   <FormLabel>Label</FormLabel>
                   <FormControl>
                     <Select
-                      onValueChange={field.onChange}
                       defaultValue={field.value}
+                      onValueChange={field.onChange}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select a Node name" />

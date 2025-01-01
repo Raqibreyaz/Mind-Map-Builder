@@ -1,4 +1,4 @@
-import { Workflow } from "@/features/workflow/workflow";
+import { Workflow } from "@/features/workflow/Workflow";
 
 const App = () => {
   return (

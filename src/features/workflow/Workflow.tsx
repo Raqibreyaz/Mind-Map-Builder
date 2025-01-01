@@ -6,6 +6,7 @@ import {
   Controls,
   Edge,
   Node,
+  NodeMouseHandler,
   ReactFlow,
   ReactFlowProvider,
   reconnectEdge,
@@ -33,6 +34,7 @@ import {
 import { ContextMenu } from "@/features/workflow/components/ContextMenu";
 import { EditNodeForm } from "@/features/workflow/components/EditNodeForm";
 import { useEditNode } from "./state/use-edit-node";
+import { ChartSection } from "./components/ChartSection";
 
 function DnDFlow() {
   const ref = useRef(null);
@@ -41,7 +43,12 @@ function DnDFlow() {
   const setNodeId = useEditNode((state) => state.setNodeId);
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
-  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+  const [menu, setMenu] = useState<{
+    top: number | undefined;
+    left: number | undefined;
+    bottom: number | undefined;
+    right: number | undefined;
+  } | null>(null);
 
   const { screenToFlowPosition } = useReactFlow();
   const [nodeType, setNodeType] = useNodeType();
@@ -108,8 +115,8 @@ function DnDFlow() {
     [setEdges]
   );
 
-  const onNodeContextMenu = useCallback(
-    (event: any, node: Node) => {
+  const onNodeContextMenu: NodeMouseHandler<Node> = useCallback(
+    (event, node: Node) => {
       // Prevent native context menu from showing
       event.preventDefault();
 
@@ -118,10 +125,39 @@ function DnDFlow() {
       const pane = (
         ref.current as unknown as HTMLDivElement
       ).getBoundingClientRect();
-      const x = event.clientX - pane.left + window.scrollX;
-      const y = event.clientY - pane.top + window.scrollY;
+      // Define the maximum margin to prevent overflow
+      const margin = 20;
 
-      setMenu({ x, y });
+      // Initial values for top and left based on mouse position
+      let top = event.clientY;
+      let left = event.clientX;
+
+      // Ensure the context menu stays within the pane bounds, adjusting if necessary
+
+      // Adjust left (horizontal) positioning if it overflows the right side
+      if (left + margin > pane.width) {
+        left = pane.width - margin;
+      }
+
+      // Adjust top (vertical) positioning if it overflows the bottom side
+      if (top + margin > pane.height) {
+        top = pane.height - margin;
+      }
+
+      // If the menu would overflow the bottom, move it upwards
+      const bottom = pane.height - top < margin ? top - margin : undefined;
+
+      // If the menu would overflow the right, move it to the left
+      const right = pane.width - left < margin ? left - margin : undefined;
+
+      // Set the menu position using top, left, bottom, and right values
+      setMenu({
+        top, // Vertical position
+        left, // Horizontal position
+        bottom, // Vertical overflow handling (if needed)
+        right, // Horizontal overflow handling (if needed)
+      });
+
       setNodeId(node.id);
     },
     [setMenu]
@@ -136,7 +172,7 @@ function DnDFlow() {
   }, [edges]);
 
   return (
-    <div className="h-screen w-3/4 border" ref={reactFlowWrapper}>
+    <div className="h-screen w-full border" ref={reactFlowWrapper}>
       <ReactFlow
         fitView
         ref={ref}
@@ -163,6 +199,9 @@ function DnDFlow() {
         {menu && <ContextMenu {...menu} />}
       </ReactFlow>
       <EditNodeForm />
+      <div>
+        <ChartSection nodes={nodes} />
+      </div>
     </div>
   );
 }

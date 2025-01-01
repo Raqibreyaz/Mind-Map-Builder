@@ -40,7 +40,10 @@ export const createNode = (nodeType: string, position: XYPosition) => {
     data: {
       label: nodeType,
       name: nodeType,
-      execution_time: 0,
+      execution_time:
+        nodeType === "start" || nodeType === "end"
+          ? 0
+          : Math.floor(Math.random() * 10),
       borderColor: "border-gray-400",
     },
     sourcePosition: nodeType !== "end" ? Position.Bottom : undefined,

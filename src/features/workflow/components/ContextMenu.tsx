@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
   Popover,
   PopoverTrigger,
@@ -12,11 +12,19 @@ import { useEditNode } from "../state/use-edit-node";
 import { Button } from "@/components/ui/button";
 
 interface ContextMenuProps {
-  x: number;
-  y: number;
+  top: number | undefined;
+  left: number | undefined;
+  bottom: number | undefined;
+  right: number | undefined;
 }
 
-export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y }) => {
+export const ContextMenu: React.FC<ContextMenuProps> = ({
+  top,
+  left,
+  bottom,
+  right,
+}) => {
+  const open = useRef(true);
   const nodeId = useEditNode((state) => state.nodeId);
   const setOpen = useEditNode((state) => state.setOpen);
   const { getNode, setNodes, setEdges, getEdges } = useReactFlow();
@@ -39,6 +47,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y }) => {
   const deleteNode = useCallback(() => {
     setNodes((nodes) => nodes.filter((node) => node.id !== nodeId));
     setEdges((edges) => edges.filter((edge) => edge.source !== nodeId));
+    open.current = false;
   }, [nodeId, setNodes, setEdges]);
 
   // invoke the edit node sheet
@@ -46,11 +55,15 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y }) => {
     setOpen(true);
   }, [setOpen]);
 
+  useEffect(() => {
+    open.current = true;
+  }, [nodeId]);
+
   return (
-    <Popover open>
+    <Popover open={open.current}>
       <PopoverTrigger
         className="absolute"
-        style={{ top: y, left: x }}
+        style={{ top, left, right, bottom }}
       ></PopoverTrigger>
       <PopoverContent className="w-50 p-2">
         <div className="flex flex-col gap-3">
