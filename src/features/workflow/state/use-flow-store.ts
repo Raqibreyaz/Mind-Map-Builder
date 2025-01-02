@@ -16,9 +16,13 @@ import { createNode, validateNodes } from "../utils/nodes.utils";
 interface WorkflowState {
   nodes: Node[];
   edges: Edge[];
+  history: { nodes: Node[]; edges: Edge[] }[];
+  future: { nodes: Node[]; edges: Edge[] }[];
   getNode: (nodeId: string | null) => Node | undefined;
   setNodes: (nodes: Node[], edges?: Edge[]) => void;
   setEdges: (edges: Edge[]) => void;
+  undo: () => void;
+  redo: () => void;
   onNodesChange: OnNodesChange<Node>;
   onEdgesChange: OnEdgesChange<Edge>;
   addNewNode: (
@@ -38,30 +42,68 @@ interface WorkflowState {
 export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   nodes: initialNodes,
   edges: initialEdges,
+  history: [],
+  future: [],
 
   getNode: (nodeId) => {
-    if (nodeId) return;
-    console.log('nodes',get().nodes)
-    const node = get().nodes.find((node) => node.id === nodeId);
-    console.log(node);
-    return node;
+    if (!nodeId) return;
+    return get().nodes.find((node) => node.id === nodeId);
   },
-  // validating nodes before saving
-  setNodes: (nodes, edges) =>
-    set((state) => ({ nodes: validateNodes(nodes, edges ?? state.edges) })),
 
-  // when updating edges validate nodes for that edges
-  setEdges: (edges) =>
+  setNodes: (nodes, edges) => {
+    const { nodes: prevNodes, edges: prevEdges } = get();
+    set((state) => ({
+      history: [
+        ...state.history,
+        { nodes: prevNodes, edges: prevEdges }, // Push current state to history
+      ],
+      future: [], // Clear future on new action
+      nodes: validateNodes(nodes, edges ?? state.edges),
+    }));
+  },
+
+  setEdges: (edges) => {
+    const { nodes: prevNodes, edges: prevEdges } = get();
     set((state) => {
-      state.setNodes(state.nodes, edges);
-      return { edges };
-    }),
+      state.setNodes(prevNodes, edges);
+      return {
+        history: [...state.history, { nodes: prevNodes, edges: prevEdges }],
+        future: [],
+        edges,
+      };
+    });
+  },
+
+  undo: () => {
+    const { history, nodes, edges, future } = get();
+    if (history.length === 0) return;
+
+    const prevState = history[history.length - 1];
+    set(() => ({
+      nodes: prevState.nodes,
+      edges: prevState.edges,
+      history: history.slice(0, -1), // Remove last state from history
+      future: [{ nodes, edges }, ...future], // Store current state in future
+    }));
+  },
+
+  redo: () => {
+    const { future, nodes, edges, history } = get();
+    if (future.length === 0) return;
+
+    const nextState = future[0];
+    set(() => ({
+      nodes: nextState.nodes,
+      edges: nextState.edges,
+      history: [...history, { nodes, edges }], // Push current to history
+      future: future.slice(1), // Remove first state from future
+    }));
+  },
 
   onNodesChange: (changes) => {
     set((state) => {
       const nodes = applyNodeChanges(changes, state.nodes);
-      const edges = state.edges;
-      state.setNodes(nodes, edges);
+      state.setNodes(nodes, state.edges);
       return {};
     });
   },
@@ -104,18 +146,19 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     const nodes = get().nodes.map((node) =>
       node.id === nodeId ? { ...node, data: { ...node.data, ...data } } : node
     );
-
     get().setNodes(nodes);
   },
 
-  // remove that node with its connected edges
   removeNode: (nodeId) => {
     if (!nodeId) return;
     const nodes = get().nodes.filter((node) => node.id !== nodeId);
-    const edges = get().edges.filter((edge) => edge.source !== nodeId);
+    const edges = get().edges.filter(
+      (edge) => edge.source !== nodeId && edge.target !== nodeId
+    );
     get().setNodes(nodes);
     get().setEdges(edges);
   },
+
   reconnectOldEdge: (oldEdge, newConnection) => {
     set((state) => {
       const edges = reconnectEdge(oldEdge, newConnection, state.edges);
