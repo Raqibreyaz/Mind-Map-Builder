@@ -49,8 +49,6 @@ function DnDFlow() {
     reconnectOldEdge,
   } = useWorkflowStore();
 
-  console.log(nodes);
-
   const edgeReconnectSuccessful = useRef(true);
   const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
   const setNodeId = useEditNode((state) => state.setNodeId);
@@ -96,16 +94,12 @@ function DnDFlow() {
 
   // when you drag the edge to connect to other node then this will run
   const onReconnectStart = useCallback(() => {
-    console.log("on reconnection start");
     edgeReconnectSuccessful.current = false;
   }, []);
 
   // when you reconnected the edge at somenode or dropped it then this will run
   const onReconnect = useCallback(
     (oldEdge: Edge, newConnection: Connection) => {
-      console.log("reconnection done");
-      console.log("old age ", oldEdge);
-      console.log("new connection", newConnection);
       edgeReconnectSuccessful.current = true;
       reconnectOldEdge(oldEdge, newConnection);
     },

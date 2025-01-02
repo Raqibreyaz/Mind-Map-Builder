@@ -36,7 +36,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
 
   const duplicateNode = useCallback(() => {
     const node = getNode(nodeId ?? "");
-    console.log("duplicate ", node);
     const position = {
       x: (node?.position.x ?? 0) + 50,
       y: (node?.position.y ?? 0) + 50,

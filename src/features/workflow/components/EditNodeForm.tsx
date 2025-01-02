@@ -43,7 +43,6 @@ export const EditNodeForm = memo(() => {
 
   // memoising the node
   const node = getNode(nodeId ?? "");
-  console.log(node);
   const form = useForm<editNodeSchemaType>({
     resolver: zodResolver(EditNodeSchema),
     defaultValues: {
