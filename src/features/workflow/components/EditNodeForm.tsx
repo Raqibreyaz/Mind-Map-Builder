@@ -5,7 +5,6 @@ import {
   EditNodeSchema,
   editNodeSchemaType,
 } from "@/features/workflow/schemas/edit-node";
-import { useReactFlow } from "@xyflow/react";
 import {
   Sheet,
   SheetContent,
@@ -33,16 +32,18 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { memo, useCallback, useEffect, useMemo } from "react";
-import { useUndoRedo } from "../hooks/useUndoRedo";
+import { memo, useCallback, useEffect} from "react";
+import { useWorkflowStore } from "../state/use-flow-store";
+import { useReactFlow } from "@xyflow/react";
 
 export const EditNodeForm = memo(() => {
   const { open, nodeId, setOpen, setNodeId } = useEditNode();
-  const { addChange } = useUndoRedo();
-  const { getNode, setNodes } = useReactFlow();
+  const { getNode } = useReactFlow();
+  const updateNode = useWorkflowStore((state) => state.updateNode);
 
   // memoising the node
-  const node = useMemo(() => getNode(nodeId ?? ""), [nodeId, getNode]);
+  const node = getNode(nodeId ?? "");
+  console.log(node);
   const form = useForm<editNodeSchemaType>({
     resolver: zodResolver(EditNodeSchema),
     defaultValues: {
@@ -55,20 +56,11 @@ export const EditNodeForm = memo(() => {
   // update the node
   const onSubmit = useCallback(
     (data: editNodeSchemaType) => {
-      let nodeState = {};
-      setNodes((prevNodeState) =>
-        prevNodeState.map((prevNode) => {
-          if (prevNode.id === nodeId) nodeState = prevNode;
-          return prevNode.id === nodeId
-            ? { ...prevNode, data: { ...prevNode.data, ...data } }
-            : prevNode;
-        })
-      );
-      addChange({ type: "update", node: nodeState });
+      updateNode(nodeId, data);
       setOpen(false);
       setNodeId(null);
     },
-    [setNodes, setOpen, nodeId]
+    [updateNode, setOpen, nodeId]
   );
 
   useEffect(() => {

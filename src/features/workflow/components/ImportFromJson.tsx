@@ -23,7 +23,7 @@ export const ImportFromJson = () => {
       className="w-28 cursor-pointer relative inline-flex items-center px-4 py-2 bg-blue-400 text-white rounded-md hover:bg-blue-600"
     >
       <p className="absolute text-center text-xs">Import from Json</p>
-      <input
+      <Input
         type="file"
         accept=".json"
         onChange={onFileChange}

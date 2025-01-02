@@ -1,6 +1,6 @@
 import "@xyflow/react/dist/style.css";
+
 import {
-  addEdge,
   Background,
   Connection,
   Controls,
@@ -10,8 +10,6 @@ import {
   ReactFlow,
   ReactFlowProvider,
   reconnectEdge,
-  useEdgesState,
-  useNodesState,
   useReactFlow,
 } from "@xyflow/react";
 
@@ -23,30 +21,39 @@ import {
 } from "@/features/workflow/hooks/useNodeType";
 import {
   defaultEdgeOptions,
-  initialNodes,
   initialEdges,
+  initialNodes,
   nodeTypes,
   snapGrid,
 } from "@/features/workflow/constants";
-import {
-  createNode,
-  validateNodes,
-} from "@/features/workflow/utils/nodes.utils";
 import { ContextMenu } from "@/features/workflow/components/ContextMenu";
 import { EditNodeForm } from "@/features/workflow/components/EditNodeForm";
 import { useEditNode } from "./state/use-edit-node";
 import { ChartSection } from "./components/ChartSection";
-import { useUndoRedo } from "./hooks/useUndoRedo";
 import { UndoRedo } from "./components/UndoRedo";
+import { useWorkflowStore } from "./state/use-flow-store";
 
 function DnDFlow() {
   const ref = useRef(null);
+
+  const {
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+    addNewNode,
+    addNewEdge,
+    removeEdge,
+    onNodesChange,
+    onEdgesChange,
+    reconnectOldEdge,
+  } = useWorkflowStore();
+
+  console.log(nodes);
+
   const edgeReconnectSuccessful = useRef(true);
   const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
   const setNodeId = useEditNode((state) => state.setNodeId);
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
-  const { addChange } = useUndoRedo();
   const [menu, setMenu] = useState<{
     top: number | undefined;
     left: number | undefined;
@@ -56,6 +63,7 @@ function DnDFlow() {
 
   const { screenToFlowPosition } = useReactFlow();
   const [nodeType, setNodeType] = useNodeType();
+
   // make the selected node draggable
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -77,49 +85,42 @@ function DnDFlow() {
         x: clientX,
         y: clientY,
       });
-      const newNode = createNode(nodeType, position);
-      // adding new node
-      setNodes((nds) => validateNodes(nds.concat(newNode), edges));
+      // const newNode = createNode(nodeType, position);
+      // // adding new node
+      // setNodes((nds) => validateNodes(nds.concat(newNode), edges));
+      addNewNode(nodeType, position);
       setNodeType(null);
-      addChange({ type: "add", node: newNode });
     },
     [screenToFlowPosition, nodeType]
   );
 
-  // will connect two nodes with a connection line(edge)
-  const onConnect = useCallback(
-    (connection: Connection) => {
-      setEdges((prevEdgeState) => addEdge(connection, prevEdgeState));
-      addChange({ type: "add", edge: connection });
-    },
-    [setEdges]
-  );
-
   // when you drag the edge to connect to other node then this will run
   const onReconnectStart = useCallback(() => {
+    console.log("on reconnection start");
     edgeReconnectSuccessful.current = false;
   }, []);
 
   // when you reconnected the edge at somenode or dropped it then this will run
   const onReconnect = useCallback(
     (oldEdge: Edge, newConnection: Connection) => {
+      console.log("reconnection done");
+      console.log("old age ", oldEdge);
+      console.log("new connection", newConnection);
       edgeReconnectSuccessful.current = true;
-      setEdges((els) => reconnectEdge(oldEdge, newConnection, els));
-      addChange({ type: "add", edge: newConnection });
+      reconnectOldEdge(oldEdge, newConnection);
     },
-    [setEdges]
+    [reconnectEdge]
   );
 
   // remove the edge if it is not connected at anywhere
   const onReconnectEnd = useCallback(
     (_: any, edge: Edge) => {
       if (!edgeReconnectSuccessful.current) {
-        addChange({ type: "delete", edge });
-        setEdges((eds) => eds.filter((e) => e.id !== edge.id));
+        removeEdge(edge.id);
       }
       edgeReconnectSuccessful.current = true;
     },
-    [setEdges]
+    [removeEdge]
   );
 
   const onNodeContextMenu: NodeMouseHandler<Node> = useCallback(
@@ -173,10 +174,10 @@ function DnDFlow() {
   // Close the context menu if it's open whenever the window is clicked.
   const onPaneClick = useCallback(() => setMenu(null), [setMenu]);
 
-  // when edges change then validate nodes
   useEffect(() => {
-    setNodes(validateNodes(nodes, edges));
-  }, [edges]);
+    setNodes(initialNodes);
+    setEdges(initialEdges);
+  }, []);
 
   return (
     <div className="h-screen w-full border" ref={reactFlowWrapper}>
@@ -187,7 +188,7 @@ function DnDFlow() {
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
+        onConnect={addNewEdge}
         defaultEdgeOptions={defaultEdgeOptions}
         onDragOver={onDragOver}
         onDrop={onDrop}
