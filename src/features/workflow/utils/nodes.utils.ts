@@ -31,23 +31,24 @@ export const validateNodes = (nodes: Node[], edges: Edge[]) => {
   });
 };
 
-export const createNode = (nodeType: string, position: XYPosition) => {
+export const createNode = (
+  nodeType: string,
+  position: XYPosition,
+  origin?: [number, number]
+) => {
   // creating new node
-  return {
+  const node: Node = {
     id: uuid(),
     type: "WorkflowNode",
     position,
     data: {
       label: nodeType,
       name: nodeType,
-      execution_time:
-        nodeType === "start" || nodeType === "end"
-          ? 0
-          : Math.floor(Math.random() * 10),
       borderColor: "border-gray-400",
     },
     sourcePosition: nodeType !== "end" ? Position.Bottom : undefined,
     targetPosition: nodeType !== "start" ? Position.Top : undefined,
   };
+  if (origin) node.origin = origin;
+  return node;
 };
-

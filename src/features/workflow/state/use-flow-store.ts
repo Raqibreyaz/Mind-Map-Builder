@@ -32,7 +32,7 @@ interface WorkflowState {
   addNewEdge: (connection: Connection) => void;
   updateNode: (
     nodeId: string | null,
-    data: { name: string; label: string; execution_time: number }
+    data: { name: string; label: string }
   ) => void;
   removeEdge: (edgeId: string | null) => void;
   removeNode: (nodeId: string | null) => void;
@@ -121,7 +121,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     const newNode = createNode(nodeType, position);
     set((state) => {
       const nodes = [...state.nodes, newNode];
-      state.setNodes(nodes);
+      state.setNodes(validateNodes(nodes, state.edges));
       return {};
     });
   },

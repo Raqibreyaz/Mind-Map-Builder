@@ -12,9 +12,14 @@ export const nodeTypes = {
   WorkflowNode,
 };
 
+export const edgeTypes = {
+
+};
+
 export const defaultNodeOptions = {};
 export const defaultEdgeOptions = {
   animated: true,
+  type: "floating",
   markerEnd: { type: MarkerType.Arrow },
 };
 

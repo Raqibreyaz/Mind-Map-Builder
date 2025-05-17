@@ -1,0 +1,10 @@
+- remove all the charts ✅
+- remove execution time from nodes ✅
+- draggable tool panel ✅
+- node resizer ✅
+- add task node on edge drop 
+- dark mode
+- proximity connect
+- download image
+- optimise history + undo/redo
+- tool pallete hider

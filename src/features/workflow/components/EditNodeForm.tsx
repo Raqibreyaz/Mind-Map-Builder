@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { memo, useCallback, useEffect} from "react";
+import { memo, useCallback, useEffect } from "react";
 import { useWorkflowStore } from "../state/use-flow-store";
 import { useReactFlow } from "@xyflow/react";
 
@@ -47,7 +47,6 @@ export const EditNodeForm = memo(() => {
     resolver: zodResolver(EditNodeSchema),
     defaultValues: {
       label: (node?.data.label ?? "") as string, // Fallback to empty string if undefined
-      execution_time: (node?.data.execution_time ?? 0) as number, // Fallback to 0
       name: (node?.data.name ?? "") as string, // Fallback to empty string
     },
   });
@@ -66,7 +65,6 @@ export const EditNodeForm = memo(() => {
     if (node)
       form.reset({
         label: node?.data.label as string,
-        execution_time: node?.data.execution_time as number,
         name: node.data.name as string,
       });
   }, [node]);
@@ -126,22 +124,6 @@ export const EditNodeForm = memo(() => {
                   </FormControl>
                   <FormDescription>
                     This is the name of the node
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="execution_time"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Execution Time</FormLabel>
-                  <FormControl>
-                    <Input placeholder="eg. 10" type="number" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    This is the Execution time of your Node
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

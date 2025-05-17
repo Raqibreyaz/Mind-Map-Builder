@@ -3,10 +3,13 @@ import "@xyflow/react/dist/style.css";
 import {
   Background,
   Connection,
+  ConnectionState,
   Controls,
   Edge,
+  FinalConnectionState,
   Node,
   NodeMouseHandler,
+  Position,
   ReactFlow,
   ReactFlowProvider,
   reconnectEdge,
@@ -14,13 +17,14 @@ import {
 } from "@xyflow/react";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { ToolPallete } from "@/features/workflow/components/ToolPallete";
+import { DraggablePanel } from "@/features/workflow/components/DraggablePanel";
 import {
   DnDProvider,
   useNodeType,
 } from "@/features/workflow/hooks/useNodeType";
 import {
   defaultEdgeOptions,
+  edgeTypes,
   initialEdges,
   initialNodes,
   nodeTypes,
@@ -29,9 +33,9 @@ import {
 import { ContextMenu } from "@/features/workflow/components/ContextMenu";
 import { EditNodeForm } from "@/features/workflow/components/EditNodeForm";
 import { useEditNode } from "./state/use-edit-node";
-import { ChartSection } from "./components/ChartSection";
 import { UndoRedo } from "./components/UndoRedo";
 import { useWorkflowStore } from "./state/use-flow-store";
+import { createNode } from "./utils/nodes.utils";
 
 function DnDFlow() {
   const ref = useRef(null);
@@ -83,9 +87,6 @@ function DnDFlow() {
         x: clientX,
         y: clientY,
       });
-      // const newNode = createNode(nodeType, position);
-      // // adding new node
-      // setNodes((nds) => validateNodes(nds.concat(newNode), edges));
       addNewNode(nodeType, position);
       setNodeType(null);
     },
@@ -115,6 +116,33 @@ function DnDFlow() {
       edgeReconnectSuccessful.current = true;
     },
     [removeEdge]
+  );
+
+  const onConnectEnd = useCallback(
+    (event: any, connectionState: FinalConnectionState) => {
+      // when a connection is dropped on the pane it's not valid
+      if (!connectionState.isValid && connectionState.fromNode) {
+        // we need to remove the wrapper bounds, in order to get the correct position
+        const { clientX, clientY } =
+          "changedTouches" in event ? event.changedTouches[0] : event;
+
+        const position = screenToFlowPosition({
+          x: clientX,
+          y: clientY,
+        });
+
+        const newNode = createNode("task", position, [0.5, 0.0]);
+
+        addNewNode(newNode.type, newNode.position);
+        addNewEdge({
+          source: connectionState.fromNode.id,
+          target: newNode.id,
+          sourceHandle: Position.Bottom,
+          targetHandle: Position.Top,
+        });
+      }
+    },
+    [screenToFlowPosition]
   );
 
   const onNodeContextMenu: NodeMouseHandler<Node> = useCallback(
@@ -187,24 +215,23 @@ function DnDFlow() {
         onDragOver={onDragOver}
         onDrop={onDrop}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         onReconnectStart={onReconnectStart}
         onReconnectEnd={onReconnectEnd}
         onReconnect={onReconnect}
+        onConnectEnd={onConnectEnd}
         onPaneClick={onPaneClick}
         onNodeContextMenu={onNodeContextMenu}
         snapToGrid={true}
         snapGrid={snapGrid}
       >
-        <ToolPallete />
+        <DraggablePanel />
         <Background />
         <UndoRedo />
         <Controls />
         {menu && <ContextMenu {...menu} />}
       </ReactFlow>
       <EditNodeForm />
-      <div>
-        <ChartSection nodes={nodes} />
-      </div>
     </div>
   );
 }

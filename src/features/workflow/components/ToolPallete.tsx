@@ -37,6 +37,7 @@ export const ToolPallete = function () {
           type="button"
           className="capitalize sm:text-sm text-xs text-gray-700 max-sm:px-[5px] py-1 rounded-2xl"
           onDragStart={(event) => onDragStart(event, nodeType as NodeTypes)}
+          onMouseDown={(event) => event.stopPropagation()}
           draggable
         >
           {nodeType}
