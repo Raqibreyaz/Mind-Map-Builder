@@ -2,7 +2,7 @@
 
 ## 🎥 Demo
 
-📽️ **[Demo Video](./Demo.mkv)** — See the app in action!
+📽️ **[Demo Video](./Demo_compressed.mp4)** — See the app in action!
 
 ---
 
