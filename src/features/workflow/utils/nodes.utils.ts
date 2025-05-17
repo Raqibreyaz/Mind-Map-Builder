@@ -52,3 +52,30 @@ export const createNode = (
   if (origin) node.origin = origin;
   return node;
 };
+
+interface State {
+  nodes: Node[];
+  edges: Edge[];
+}
+
+export function areFlowStatesEqual(prevState: State, nextState: State) {
+  const filterNode = (node: Node) => {
+    const { id, data, type } = node;
+    return { id, data, type };
+  };
+
+  const filterEdge = (edge: Edge) => {
+    const { id, source, target, type, label } = edge;
+    return { id, source, target, type, label };
+  };
+
+  const prevNodes = prevState.nodes.map(filterNode);
+  const nextNodes = nextState.nodes.map(filterNode);
+  const prevEdges = prevState.edges.map(filterEdge);
+  const nextEdges = nextState.edges.map(filterEdge);
+
+  return (
+    JSON.stringify(prevNodes) === JSON.stringify(nextNodes) &&
+    JSON.stringify(prevEdges) === JSON.stringify(nextEdges)
+  );
+}

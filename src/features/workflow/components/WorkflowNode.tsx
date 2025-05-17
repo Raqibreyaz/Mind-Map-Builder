@@ -5,7 +5,7 @@ export const WorkflowNode = memo(
   ({
     data,
     isConnectable,
-    selected,
+    // selected,
   }: {
     data: {
       label: string;
@@ -18,12 +18,6 @@ export const WorkflowNode = memo(
   }) => {
     return (
       <>
-        <NodeResizer
-          minWidth={100}
-          minHeight={50}
-          isVisible={selected}
-          color="#6366f1"
-        />
         <div
           className={`border ${
             data.borderColor ?? ""

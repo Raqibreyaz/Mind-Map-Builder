@@ -11,7 +11,11 @@ import {
   reconnectEdge,
 } from "@xyflow/react";
 import { initialEdges, initialNodes } from "../constants";
-import { createNode, validateNodes } from "../utils/nodes.utils";
+import {
+  createNode,
+  validateNodes,
+  areFlowStatesEqual,
+} from "../utils/nodes.utils";
 
 interface WorkflowState {
   nodes: Node[];
@@ -38,7 +42,6 @@ interface WorkflowState {
   removeNode: (nodeId: string | null) => void;
   reconnectOldEdge: (oldEdge: Edge, newConnection: Connection) => void;
 }
-
 export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   nodes: initialNodes,
   edges: initialEdges,
@@ -52,11 +55,19 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
 
   setNodes: (nodes, edges) => {
     const { nodes: prevNodes, edges: prevEdges } = get();
+
+    const isChanged = !areFlowStatesEqual(
+      { nodes: prevNodes, edges: prevEdges },
+      { nodes, edges: edges ?? prevEdges }
+    );
+
     set((state) => ({
-      history: [
-        ...state.history,
-        { nodes: prevNodes, edges: prevEdges }, // Push current state to history
-      ],
+      history: isChanged
+        ? [
+            ...state.history,
+            { nodes: prevNodes, edges: prevEdges }, // Push current state to history
+          ]
+        : state.history,
       future: [], // Clear future on new action
       nodes: validateNodes(nodes, edges ?? state.edges),
     }));
