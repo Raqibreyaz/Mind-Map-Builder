@@ -3,7 +3,6 @@ import "@xyflow/react/dist/style.css";
 import {
   Background,
   Connection,
-  ConnectionState,
   Controls,
   Edge,
   FinalConnectionState,

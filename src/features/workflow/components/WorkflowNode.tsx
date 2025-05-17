@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Handle, NodeResizer, Position } from "@xyflow/react";
+import { Handle, Position } from "@xyflow/react";
 
 export const WorkflowNode = memo(
   ({
