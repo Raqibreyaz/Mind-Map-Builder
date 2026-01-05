@@ -1,5 +1,4 @@
-import "@xyflow/react/dist/style.css";
-
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Background,
   Connection,
@@ -14,8 +13,7 @@ import {
   reconnectEdge,
   useReactFlow,
 } from "@xyflow/react";
-
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import "@xyflow/react/dist/style.css";
 import { DraggablePanel } from "@/features/workflow/components/DraggablePanel";
 import {
   DnDProvider,
@@ -35,10 +33,18 @@ import { useEditNode } from "./state/use-edit-node";
 import { UndoRedo } from "./components/UndoRedo";
 import { useWorkflowStore } from "./state/use-flow-store";
 import { createNode } from "./utils/nodes.utils";
+import { ExportButton } from "./components/ExportButton";
+import { useExportGraph } from "./hooks/useExportGraph";
 
 function DnDFlow() {
+  // THIS IS THE KEY REF - for capturing the flow
+  const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
+  
+  // Your existing refs
   const ref = useRef(null);
+  const edgeReconnectSuccessful = useRef(true);
 
+  // Store
   const {
     nodes,
     edges,
@@ -52,8 +58,15 @@ function DnDFlow() {
     reconnectOldEdge,
   } = useWorkflowStore();
 
-  const edgeReconnectSuccessful = useRef(true);
-  const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
+  // Export hook - pass the wrapper ref
+  const {
+    exportAsPNG,
+    exportAsGIF,
+    exportAsSVG,
+    exportAsJSON,
+  } = useExportGraph();
+
+  // Edit node
   const setNodeId = useEditNode((state) => state.setNodeId);
   const [menu, setMenu] = useState<{
     top: number | undefined;
@@ -65,23 +78,75 @@ function DnDFlow() {
   const { screenToFlowPosition } = useReactFlow();
   const [nodeType, setNodeType] = useNodeType();
 
-  // make the selected node draggable
+  // Export handlers
+  const handleExportPNG = async () => {
+    if (!reactFlowWrapper.current) return;
+    
+    // Create a temporary container to capture
+    const container = reactFlowWrapper.current;
+    
+    try {
+      await exportAsPNG({
+        containerRef: { current: container },
+        filename: `workflow-${new Date().toISOString().split("T")[0]}.png`,
+        backgroundColor: "#ffffff",
+        scale: 2,
+      });
+    } catch (error) {
+      console.error("Export failed:", error);
+    }
+  };
+
+  const handleExportGIF = async () => {
+    if (!reactFlowWrapper.current) return;
+    
+    const container = reactFlowWrapper.current;
+    
+    try {
+      await exportAsGIF({
+        containerRef: { current: container },
+        filename: `workflow-${new Date().toISOString().split("T")[0]}.gif`,
+        backgroundColor: "#ffffff",
+        scale: 2,
+        gifFrames: 60,
+        gifDelay: 50,
+        gifQuality: 10,
+      });
+    } catch (error) {
+      console.error("GIF export failed:", error);
+    }
+  };
+
+  const handleExportSVG = () => {
+    if (!reactFlowWrapper.current) return;
+    
+    const container = reactFlowWrapper.current;
+    
+    exportAsSVG({
+      containerRef: { current: container },
+      filename: `workflow-${new Date().toISOString().split("T")[0]}.svg`,
+    });
+  };
+
+  const handleExportJSON = () => {
+    exportAsJSON(
+      `workflow-${new Date().toISOString().split("T")[0]}.json`
+    );
+  };
+
+  // Your existing handlers
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
   }, []);
 
-  // when droping the selected node create the node at there
   const onDrop = useCallback(
     (event: any) => {
       event.preventDefault();
-      // check if the dropped element is valid
-      if (!nodeType) {
-        return;
-      }
+      if (!nodeType) return;
+      
       const { clientX, clientY } =
         "changedTouches" in event ? event.changedTouches[0] : event;
-      // taking the drop position
       const position = screenToFlowPosition({
         x: clientX,
         y: clientY,
@@ -89,24 +154,21 @@ function DnDFlow() {
       addNewNode(nodeType, position);
       setNodeType(null);
     },
-    [screenToFlowPosition, nodeType]
+    [screenToFlowPosition, nodeType, addNewNode, setNodeType]
   );
 
-  // when you drag the edge to connect to other node then this will run
   const onReconnectStart = useCallback(() => {
     edgeReconnectSuccessful.current = false;
   }, []);
 
-  // when you reconnected the edge at somenode or dropped it then this will run
   const onReconnect = useCallback(
     (oldEdge: Edge, newConnection: Connection) => {
       edgeReconnectSuccessful.current = true;
       reconnectOldEdge(oldEdge, newConnection);
     },
-    [reconnectEdge]
+    [reconnectOldEdge]
   );
 
-  // remove the edge if it is not connected at anywhere
   const onReconnectEnd = useCallback(
     (_: any, edge: Edge) => {
       if (!edgeReconnectSuccessful.current) {
@@ -117,91 +179,59 @@ function DnDFlow() {
     [removeEdge]
   );
 
-  const onConnectEnd = useCallback(
-    (event: any, connectionState: FinalConnectionState) => {
-      // when a connection is dropped on the pane it's not valid
-      if (!connectionState.isValid && connectionState.fromNode) {
-        // we need to remove the wrapper bounds, in order to get the correct position
-        const { clientX, clientY } =
-          "changedTouches" in event ? event.changedTouches[0] : event;
-
-        const position = screenToFlowPosition({
-          x: clientX,
-          y: clientY,
-        });
-
-        const newNode = createNode("task", position, [0.5, 0.0]);
-
-        addNewNode(newNode.type, newNode.position);
-        addNewEdge({
-          source: connectionState.fromNode.id,
-          target: newNode.id,
-          sourceHandle: Position.Bottom,
-          targetHandle: Position.Top,
-        });
-      }
-    },
-    [screenToFlowPosition]
-  );
-
   const onNodeContextMenu: NodeMouseHandler<Node> = useCallback(
     (event, node: Node) => {
-      // Prevent native context menu from showing
       event.preventDefault();
-
-      // Calculate position of the context menu. We want to make sure it
-      // doesn't get positioned off-screen.
-      const pane = (
-        ref.current as unknown as HTMLDivElement
-      ).getBoundingClientRect();
-      // Define the maximum margin to prevent overflow
+      const pane = (ref.current as unknown as HTMLDivElement).getBoundingClientRect();
       const margin = 20;
-
-      // Initial values for top and left based on mouse position
+      
       let top = event.clientY;
       let left = event.clientX;
-
-      // Ensure the context menu stays within the pane bounds, adjusting if necessary
-
-      // Adjust left (horizontal) positioning if it overflows the right side
+      
       if (left + margin > pane.width) {
         left = pane.width - margin;
       }
-
-      // Adjust top (vertical) positioning if it overflows the bottom side
       if (top + margin > pane.height) {
         top = pane.height - margin;
       }
-
-      // If the menu would overflow the bottom, move it upwards
+      
       const bottom = pane.height - top < margin ? top - margin : undefined;
-
-      // If the menu would overflow the right, move it to the left
       const right = pane.width - left < margin ? left - margin : undefined;
-
-      // Set the menu position using top, left, bottom, and right values
-      setMenu({
-        top, // Vertical position
-        left, // Horizontal position
-        bottom, // Vertical overflow handling (if needed)
-        right, // Horizontal overflow handling (if needed)
-      });
-
+      
+      setMenu({ top, left, bottom, right });
       setNodeId(node.id);
     },
-    [setMenu]
+    [setMenu, setNodeId]
   );
 
-  // Close the context menu if it's open whenever the window is clicked.
   const onPaneClick = useCallback(() => setMenu(null), [setMenu]);
 
   useEffect(() => {
     setNodes(initialNodes);
     setEdges(initialEdges);
-  }, []);
+  }, [setNodes, setEdges]);
 
   return (
     <div className="h-screen w-full border" ref={reactFlowWrapper}>
+      {/* TOP TOOLBAR WITH EXPORT BUTTON */}
+      <div
+        style={{
+          position: "absolute",
+          top: 10,
+          right: 10,
+          zIndex: 100,
+          display: "flex",
+          gap: "8px",
+        }}
+      >
+        <ExportButton
+          onExportPNG={handleExportPNG}
+          onExportGIF={handleExportGIF}
+          onExportSVG={handleExportSVG}
+          onExportJSON={handleExportJSON}
+        />
+      </div>
+
       <ReactFlow
         fitView
         ref={ref}
@@ -218,7 +248,6 @@ function DnDFlow() {
         onReconnectStart={onReconnectStart}
         onReconnectEnd={onReconnectEnd}
         onReconnect={onReconnect}
-        onConnectEnd={onConnectEnd}
         onPaneClick={onPaneClick}
         onNodeContextMenu={onNodeContextMenu}
         snapToGrid={true}

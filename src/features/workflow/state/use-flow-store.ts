@@ -17,6 +17,7 @@ import {
   areFlowStatesEqual,
 } from "../utils/nodes.utils";
 
+
 interface WorkflowState {
   nodes: Node[];
   edges: Edge[];
@@ -36,30 +37,43 @@ interface WorkflowState {
   addNewEdge: (connection: Connection) => void;
   updateNode: (
     nodeId: string | null,
-    data: { name: string; label: string }
+    data: { name?: string; label?: string; color?: string; customColor?: string; sticker?: string }
   ) => void;
   removeEdge: (edgeId: string | null) => void;
   removeNode: (nodeId: string | null) => void;
   reconnectOldEdge: (oldEdge: Edge, newConnection: Connection) => void;
 }
+
+// Helper function to get node color (matches WorkflowNode.tsx logic)
+const getNodeDisplayColor = (nodeData: any): string => {
+  if (nodeData.customColor) {
+    return nodeData.customColor;
+  }
+  return nodeData.color || '#3B82F6';
+};
+
 export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   nodes: initialNodes,
   edges: initialEdges,
   history: [],
   future: [],
 
+
   getNode: (nodeId) => {
     if (!nodeId) return;
     return get().nodes.find((node) => node.id === nodeId);
   },
 
+
   setNodes: (nodes, edges) => {
     const { nodes: prevNodes, edges: prevEdges } = get();
+
 
     const isChanged = !areFlowStatesEqual(
       { nodes: prevNodes, edges: prevEdges },
       { nodes, edges: edges ?? prevEdges }
     );
+
 
     set((state) => ({
       history: isChanged
@@ -73,6 +87,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     }));
   },
 
+
   setEdges: (edges) => {
     const { nodes: prevNodes, edges: prevEdges } = get();
     set((state) => {
@@ -85,9 +100,11 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     });
   },
 
+
   undo: () => {
     const { history, nodes, edges, future } = get();
     if (history.length === 0) return;
+
 
     const prevState = history[history.length - 1];
     set(() => ({
@@ -98,9 +115,11 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     }));
   },
 
+
   redo: () => {
     const { future, nodes, edges, history } = get();
     if (future.length === 0) return;
+
 
     const nextState = future[0];
     set(() => ({
@@ -111,6 +130,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     }));
   },
 
+
   onNodesChange: (changes) => {
     set((state) => {
       const nodes = applyNodeChanges(changes, state.nodes);
@@ -119,6 +139,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     });
   },
 
+
   onEdgesChange: (changes) => {
     set((state) => {
       const edges = applyEdgeChanges(changes, state.edges);
@@ -126,6 +147,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
       return {};
     });
   },
+
 
   addNewNode: (nodeType, position) => {
     if (!nodeType) return;
@@ -137,13 +159,34 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     });
   },
 
+
   addNewEdge: (connection: Connection) => {
     set((state) => {
-      const edges = addEdge(connection, state.edges);
+      // Get source node to inherit its color
+      const sourceNode = state.nodes.find((n) => n.id === connection.source);
+      const sourceColor = sourceNode ? getNodeDisplayColor(sourceNode.data) : '#3B82F6';
+
+      // Create edge with source node's color - COLORFUL EDGES!
+      const edge: Edge = {
+        id: `edge-${connection.source}-${connection.sourceHandle || 'default'}-${connection.target}-${connection.targetHandle || 'default'}-${Date.now()}`,
+        source: connection.source,
+        target: connection.target,
+        sourceHandle: connection.sourceHandle,
+        targetHandle: connection.targetHandle,
+        animated: true,
+        style: {
+          stroke: sourceColor,
+          strokeWidth: 2.5,
+          opacity: 0.85,
+        },
+      };
+
+      const edges = addEdge(edge, state.edges);
       state.setEdges(edges);
       return {};
     });
   },
+
 
   removeEdge: (edgeId) => {
     set((state) => {
@@ -153,12 +196,38 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     });
   },
 
+
   updateNode: (nodeId, data) => {
-    const nodes = get().nodes.map((node) =>
-      node.id === nodeId ? { ...node, data: { ...node.data, ...data } } : node
-    );
-    get().setNodes(nodes);
+    set((state) => {
+      // Update the node with new data
+      const updatedNodes = state.nodes.map((node) =>
+        node.id === nodeId ? { ...node, data: { ...node.data, ...data } } : node
+      );
+
+      // When node color changes, update all outgoing edges to new color
+      const updatedEdges = state.edges.map((edge) => {
+        if (edge.source === nodeId) {
+          const updatedNode = updatedNodes.find((n) => n.id === nodeId);
+          if (updatedNode) {
+            const newColor = getNodeDisplayColor(updatedNode.data);
+            return {
+              ...edge,
+              style: {
+                ...edge.style,
+                stroke: newColor,
+              },
+            };
+          }
+        }
+        return edge;
+      });
+
+      // Use setNodes to maintain history
+      state.setNodes(updatedNodes, updatedEdges);
+      return {};
+    });
   },
+
 
   removeNode: (nodeId) => {
     if (!nodeId) return;
@@ -170,10 +239,30 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     get().setEdges(edges);
   },
 
+
   reconnectOldEdge: (oldEdge, newConnection) => {
     set((state) => {
+      // Get new source node color for reconnected edge
+      const sourceNode = state.nodes.find((n) => n.id === newConnection.source);
+      const sourceColor = sourceNode ? getNodeDisplayColor(sourceNode.data) : '#3B82F6';
+
       const edges = reconnectEdge(oldEdge, newConnection, state.edges);
-      state.setEdges(edges);
+      
+      // Update the reconnected edge with new color
+      const updatedEdges = edges.map((edge) => {
+        if (edge.source === newConnection.source && edge.target === newConnection.target) {
+          return {
+            ...edge,
+            style: {
+              ...edge.style,
+              stroke: sourceColor,
+            },
+          };
+        }
+        return edge;
+      });
+
+      state.setEdges(updatedEdges);
       return {};
     });
   },

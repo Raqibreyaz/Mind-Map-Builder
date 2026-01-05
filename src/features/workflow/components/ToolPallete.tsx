@@ -1,62 +1,114 @@
-import { Panel } from "@xyflow/react";
-import { useNodeType } from "@/features/workflow/hooks/useNodeType";
-import React, { useCallback } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
-import { SaveWorkflow } from "@/features/workflow/components/SaveWorkflow";
-import { ImportFromJson } from "@/features/workflow/components/ImportFromJson";
-import { ExportToJson } from "@/features/workflow/components/ExportToJson";
-import { Settings } from "lucide-react";
+import React, { useState, useMemo } from 'react';
+import { Panel } from '@xyflow/react';
+import { useNodeType } from '@/features/workflow/hooks/useNodeType';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { SaveWorkflow } from '@/features/workflow/components/SaveWorkflow';
+import { Settings } from 'lucide-react';
+import { getAllShapes, getShapeConfig, getAllStickers, getStickerConfig } from '@/features/workflow/constants/shape-config';
+import { ShapeType, StickerType } from '@/features/workflow/constants/shape-config';
 
-type NodeTypes = "start" | "end" | "task" | "decision";
-
-export const ToolPallete = function () {
+export const ToolPallete: React.FC = () => {
   const [_, setType] = useNodeType();
+  const [showStickerPicker, setShowStickerPicker] = useState(false);
 
-  const onDragStart = useCallback(
-    (event: React.DragEvent, nodeType: NodeTypes) => {
-      setType?.(nodeType);
-      event.dataTransfer.effectAllowed = "move";
-    },
-    [setType]
-  );
+  const shapes = getAllShapes();
+  const stickers = getAllStickers();
+
+  const onDragStart = (event: React.DragEvent, shapeType: ShapeType) => {
+    setType?.(shapeType);
+    event.dataTransfer.effectAllowed = 'move';
+  };
 
   return (
-    <Panel
-      position="top-left"
-      className="flex flex-col gap-5 border p-2 rounded-2xl"
-    >
-      {["start", "end", "task", "decision"].map((nodeType) => (
-        <Button
-          key={nodeType}
-          variant={"secondary"}
-          type="button"
-          className="capitalize sm:text-sm text-xs text-gray-700 max-sm:px-[5px] py-1 rounded-2xl"
-          onDragStart={(event) => onDragStart(event, nodeType as NodeTypes)}
-          onMouseDown={(event) => event.stopPropagation()}
-          draggable
-        >
-          {nodeType}
-        </Button>
-      ))}
-      <SaveWorkflow />
-      <Popover>
-        <PopoverTrigger>
-          <div className="cursor-pointer mx-auto inline-block border p-2 rounded-md bg-gray-200 ">
-            <Settings className="max-sm:size-5" />
-          </div>
-        </PopoverTrigger>
-        <PopoverContent className="w-50 p-2">
-          <div className="flex flex-col gap-3">
-            <ImportFromJson />
-            <ExportToJson />
-          </div>
-        </PopoverContent>
-      </Popover>
+    <Panel position="top-left" className="flex flex-col gap-2 border p-2 rounded-xl bg-white shadow-md max-w-xs">
+      {/* Title */}
+      <h3 className="text-xs font-bold text-gray-700 px-1">Shapes</h3>
+
+      {/* Shapes Grid - Minimal Design */}
+      <div className="grid grid-cols-4 gap-1">
+        {shapes.map((shapeType) => {
+          const config = getShapeConfig(shapeType);
+          return (
+            <button
+              key={shapeType}
+              className="flex flex-col items-center justify-center p-1.5 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200 hover:border-gray-300"
+              style={{
+                backgroundColor: config.lightColor,
+              }}
+              onDragStart={(event) => onDragStart(event as any, shapeType)}
+              onMouseDown={(event) => event.stopPropagation()}
+              draggable
+              title={config.description}
+            >
+              <span style={{ fontSize: '16px', marginBottom: '2px' }}>
+                {config.icon}
+              </span>
+              <span className="text-xs font-semibold text-gray-700" style={{ color: config.color }}>
+                {config.name.slice(0, 4)}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Divider */}
+      <div className="border-t border-gray-200 my-1" />
+
+      {/* Sticker Picker & Settings */}
+      <div className="flex gap-1 justify-center">
+        {/* Sticker Picker */}
+        <Popover open={showStickerPicker} onOpenChange={setShowStickerPicker}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="secondary"
+              className="text-xs py-1 px-2 h-7"
+              title="Add sticker badge to selected node"
+            >
+              ✨ Sticker
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-60 p-2">
+            <h4 className="text-xs font-semibold mb-2">Stickers</h4>
+            <div className="grid grid-cols-5 gap-1">
+              {stickers.map((stickerType) => {
+                const config = getStickerConfig(stickerType);
+                return (
+                  <button
+                    key={stickerType}
+                    className="p-1.5 rounded hover:bg-gray-100 transition-colors flex flex-col items-center gap-0.5 group"
+                    onClick={() => setShowStickerPicker(false)}
+                    title={config.description}
+                  >
+                    <span className="text-lg">{config.icon}</span>
+                    <span className="text-xs text-gray-600 group-hover:text-gray-900 text-center">
+                      {config.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        {/* Save Workflow */}
+        <SaveWorkflow />
+
+        {/* Settings */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <div className="cursor-pointer inline-flex items-center justify-center p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors border border-gray-200 h-7 w-7">
+              <Settings className="w-4 h-4 text-gray-600" />
+            </div>
+          </PopoverTrigger>
+          <PopoverContent className="w-48 p-2">
+            <div className="flex flex-col gap-2">
+              {/* You can add Import/Export here if needed */}
+              <p className="text-xs text-gray-600">Settings & Export/Import</p>
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
     </Panel>
   );
 };

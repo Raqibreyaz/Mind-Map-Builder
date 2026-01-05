@@ -1,8 +1,9 @@
 import { Edge, Node, Position, XYPosition } from "@xyflow/react";
 import { v4 as uuid } from "uuid";
+import { ShapeType, StickerType, getShapeConfig } from "@/features/workflow/constants/shape-config";
+import { DEFAULT_SHAPE_TYPE } from "@/features/workflow/constants";
 
 export const validateNodes = (nodes: Node[], edges: Edge[]) => {
-  const startNodes = nodes.filter(({ data: { label } }) => label === "start");
   const connectedNodeIds = new Set<string>();
 
   // Collect all nodes that have connections
@@ -14,14 +15,9 @@ export const validateNodes = (nodes: Node[], edges: Edge[]) => {
   return nodes.map((node) => {
     let borderColor = "border-gray-400"; // Default border
 
-    // Check for multiple start nodes
-    if (node.data.label === "start" && startNodes.length > 1) {
-      borderColor = "border-red-500"; // Multiple start node
-    }
-
     // Check for disconnected nodes
-    else if (!connectedNodeIds.has(node.id)) {
-      borderColor = "border-red-300"; // Disconnected node
+    if (!connectedNodeIds.has(node.id)) {
+      borderColor = "border-yellow-300"; // Disconnected node warning
     }
 
     return {
@@ -32,23 +28,29 @@ export const validateNodes = (nodes: Node[], edges: Edge[]) => {
 };
 
 export const createNode = (
-  nodeType: string,
+  shapeType: ShapeType = DEFAULT_SHAPE_TYPE,
   position: XYPosition,
   origin?: [number, number]
 ) => {
-  // creating new node
+  const shapeConfig = getShapeConfig(shapeType);
+  
   const node: Node = {
     id: uuid(),
     type: "WorkflowNode",
     position,
     data: {
-      label: nodeType,
-      name: nodeType,
+      label: shapeConfig.name,
+      name: `${shapeConfig.name}`,
+      shapeType,
+      color: shapeConfig.color,
+      customColor: null, // Can be overridden by user
+      sticker: null as StickerType | null,
       borderColor: "border-gray-400",
     },
-    sourcePosition: nodeType !== "end" ? Position.Bottom : undefined,
-    targetPosition: nodeType !== "start" ? Position.Top : undefined,
+    sourcePosition: Position.Bottom,
+    targetPosition: Position.Top,
   };
+  
   if (origin) node.origin = origin;
   return node;
 };
@@ -79,3 +81,15 @@ export function areFlowStatesEqual(prevState: State, nextState: State) {
     JSON.stringify(prevEdges) === JSON.stringify(nextEdges)
   );
 }
+
+/**
+ * Get the effective color for a node
+ * Returns custom color if set, otherwise returns shape config color
+ */
+export const getNodeColor = (nodeData: any): string => {
+  if (nodeData.customColor) {
+    return nodeData.customColor;
+  }
+  const shapeConfig = getShapeConfig(nodeData.shapeType || DEFAULT_SHAPE_TYPE);
+  return shapeConfig.color;
+};
