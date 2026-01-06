@@ -1,22 +1,22 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Panel } from '@xyflow/react';
 import { useNodeType } from '@/features/workflow/hooks/useNodeType';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { SaveWorkflow } from '@/features/workflow/components/SaveWorkflow';
-import { Settings, Eraser } from 'lucide-react';
+import { Settings, Eraser, Moon, Sun } from 'lucide-react';
 import { getAllShapes, getShapeConfig, getAllStickers, getStickerConfig } from '@/features/workflow/constants/shape-config';
-import { ShapeType, StickerType } from '@/features/workflow/constants/shape-config';
-import { useEraserMode } from '@/features/workflow/hooks/use-eraser-mode';
-import { useWorkflowStore } from '@/features/workflow/state/use-flow-store';
+import { ShapeType } from '@/features/workflow/constants/shape-config';
+import { useCanvasUiStore } from '@/features/workflow/state/use-canvas-ui-store';
 
 export const ToolPallete: React.FC = () => {
   const [_, setType] = useNodeType();
   const [showStickerPicker, setShowStickerPicker] = useState(false);
-  const { eraserMode, toggleEraserMode } = useEraserMode({
-    removeNode: useWorkflowStore((state) => state.removeNode),
-    removeEdge: useWorkflowStore((state) => state.removeEdge),
-  });
+  
+  const eraserMode = useCanvasUiStore((state) => state.eraserMode);
+  const toggleEraserMode = useCanvasUiStore((state) => state.toggleEraserMode);
+  const isDarkMode = useCanvasUiStore((state) => state.isDarkMode);
+  const toggleDarkMode = useCanvasUiStore((state) => state.toggleDarkMode);
 
   const shapes = getAllShapes();
   const stickers = getAllStickers();
@@ -31,7 +31,7 @@ export const ToolPallete: React.FC = () => {
       {/* Title */}
       <h3 className="text-xs font-bold text-gray-700 px-1 dark:text-gray-200">Shapes</h3>
 
-      {/* Shapes Grid - Minimal Design */}
+      {/* Shapes Grid */}
       <div className="grid grid-cols-4 gap-1">
         {shapes.map((shapeType) => {
           const config = getShapeConfig(shapeType);
@@ -62,7 +62,18 @@ export const ToolPallete: React.FC = () => {
       <div className="border-t border-gray-200 my-1 dark:border-gray-600" />
 
       {/* Tools Row */}
-      <div className="flex gap-1 justify-center">
+      <div className="flex gap-1 justify-center flex-wrap">
+        {/* Dark Mode Toggle */}
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={toggleDarkMode}
+          className="text-xs py-1 px-2 h-7 flex items-center gap-1"
+          title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+        >
+          {isDarkMode ? <Sun className="w-3 h-3" /> : <Moon className="w-3 h-3" />}
+        </Button>
+
         {/* Eraser Toggle */}
         <Button
           variant={eraserMode ? "destructive" : "secondary"}

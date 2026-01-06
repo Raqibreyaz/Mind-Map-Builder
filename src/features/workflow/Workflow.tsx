@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import {
   Background,
   Connection,
@@ -24,11 +24,10 @@ import {
 } from "@/features/workflow/constants";
 import { UndoRedo } from "./components/UndoRedo";
 import { useWorkflowStore } from "./state/use-flow-store";
-import { useEraserMode } from "./hooks/use-eraser-mode";
+import { useCanvasUiStore } from "./state/use-canvas-ui-store";
 
 function DnDFlow() {
   const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
-  const ref = useRef<HTMLDivElement | null>(null);
   const edgeReconnectSuccessful = useRef(true);
 
   const {
@@ -47,10 +46,8 @@ function DnDFlow() {
 
   const { screenToFlowPosition } = useReactFlow();
   const [nodeType, setNodeType] = useNodeType();
-  const { eraserMode, handleNodeMouseEnter, handleEdgeMouseEnter } = useEraserMode({
-    removeNode,
-    removeEdge,
-  });
+  const eraserMode = useCanvasUiStore((state) => state.eraserMode);
+  const isDarkMode = useCanvasUiStore((state) => state.isDarkMode);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -96,6 +93,27 @@ function DnDFlow() {
     [removeEdge]
   );
 
+  // Eraser mode handlers
+  const onNodeClick = useCallback(
+    (event: React.MouseEvent, node: Node) => {
+      if (!eraserMode) return;
+      event.preventDefault();
+      event.stopPropagation();
+      removeNode(node.id);
+    },
+    [eraserMode, removeNode]
+  );
+
+  const onEdgeClick = useCallback(
+    (event: React.MouseEvent, edge: Edge) => {
+      if (!eraserMode) return;
+      event.preventDefault();
+      event.stopPropagation();
+      removeEdge(edge.id);
+    },
+    [eraserMode, removeEdge]
+  );
+
   const onPaneClick = useCallback(() => {
     // Clear any selections when clicking on empty canvas
   }, []);
@@ -106,10 +124,14 @@ function DnDFlow() {
   }, [setNodes, setEdges]);
 
   return (
-    <div className="relative h-screen w-full border" ref={reactFlowWrapper}>
+    <div
+      className={`relative h-screen w-full border ${
+        isDarkMode ? "bg-gray-900" : "bg-white"
+      }`}
+      ref={reactFlowWrapper}
+    >
       <ReactFlow
         fitView
-        ref={ref as any}
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
@@ -124,14 +146,17 @@ function DnDFlow() {
         onReconnectEnd={onReconnectEnd}
         onReconnect={onReconnect}
         onPaneClick={onPaneClick}
-        onNodeMouseEnter={handleNodeMouseEnter}
-        onEdgeMouseEnter={handleEdgeMouseEnter}
-        style={{ cursor: eraserMode ? "crosshair" : "default" }}
+        onNodeClick={onNodeClick}
+        onEdgeClick={onEdgeClick}
+        className={eraserMode ? "cursor-crosshair" : ""}
       >
         <DraggablePanel />
-        <Background />
+        <Background
+          color={isDarkMode ? "#4b5563" : "#e5e7eb"}
+          className={isDarkMode ? "bg-gray-900" : "bg-gray-50"}
+        />
         <UndoRedo />
-        <Controls />
+        <Controls className={isDarkMode ? "bg-gray-800 text-white" : ""} />
       </ReactFlow>
     </div>
   );
