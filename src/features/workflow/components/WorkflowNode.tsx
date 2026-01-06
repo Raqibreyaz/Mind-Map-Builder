@@ -24,32 +24,31 @@ interface CustomNodeProps {
 }
 
 /**
- * Shape Rendering Components with Thin Borders (2px)
+ * Shape Rendering Components - Optimized SVG shapes
  */
 
-const CircleShape: React.FC<{ color: string; size: number }> = ({
-  color,
-  size,
-}) => (
-  <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`}>
-    <circle
-      cx={size / 2}
-      cy={size / 2}
-      r={size / 2 - 2}
-      fill="none"
-      stroke={color}
-      strokeWidth="2"
-    />
+const CircleShape: React.FC<{ color: string; size: number }> = ({ color, size }) => (
+  <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="pointer-events-none">
+    <circle cx={size / 2} cy={size / 2} r={size / 2 - 2} fill="none" stroke={color} strokeWidth="2" />
   </svg>
 );
 
-const TriangleShape: React.FC<{ color: string; size: number }> = ({
-  color,
-  size,
-}) => (
-  <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`}>
+const TriangleShape: React.FC<{ color: string; size: number }> = ({ color, size }) => (
+  <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="pointer-events-none">
+    <polygon points={`${size / 2},2 ${size - 2},${size - 2} 2,${size - 2}`} fill="none" stroke={color} strokeWidth="2" />
+  </svg>
+);
+
+const DiamondShape: React.FC<{ color: string; size: number }> = ({ color, size }) => (
+  <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="pointer-events-none">
+    <polygon points={`${size / 2},2 ${size - 2},${size / 2} ${size / 2},${size - 2} 2,${size / 2}`} fill="none" stroke={color} strokeWidth="2" />
+  </svg>
+);
+
+const HexagonShape: React.FC<{ color: string; size: number }> = ({ color, size }) => (
+  <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="pointer-events-none">
     <polygon
-      points={`${size / 2},2 ${size - 2},${size - 2} 2,${size - 2}`}
+      points={`${size * 0.5},${size * 0.05} ${size * 0.95},${size * 0.25} ${size * 0.95},${size * 0.75} ${size * 0.5},${size * 0.95} ${size * 0.05},${size * 0.75} ${size * 0.05},${size * 0.25}`}
       fill="none"
       stroke={color}
       strokeWidth="2"
@@ -57,121 +56,28 @@ const TriangleShape: React.FC<{ color: string; size: number }> = ({
   </svg>
 );
 
-const DiamondShape: React.FC<{ color: string; size: number }> = ({
-  color,
-  size,
-}) => (
-  <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`}>
-    <polygon
-      points={`${size / 2},2 ${size - 2},${size / 2} ${size / 2},${
-        size - 2
-      } 2,${size / 2}`}
-      fill="none"
-      stroke={color}
-      strokeWidth="2"
-    />
+const CylinderShape: React.FC<{ color: string; size: number }> = ({ color, size }) => (
+  <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="pointer-events-none">
+    <ellipse cx={size / 2} cy={size * 0.2} rx={size * 0.35} ry={size * 0.12} fill="none" stroke={color} strokeWidth="2" />
+    <line x1={size * 0.15} y1={size * 0.2} x2={size * 0.15} y2={size * 0.8} stroke={color} strokeWidth="2" />
+    <line x1={size * 0.85} y1={size * 0.2} x2={size * 0.85} y2={size * 0.8} stroke={color} strokeWidth="2" />
+    <ellipse cx={size / 2} cy={size * 0.8} rx={size * 0.35} ry={size * 0.12} fill="none" stroke={color} strokeWidth="2" />
   </svg>
 );
 
-const HexagonShape: React.FC<{ color: string; size: number }> = ({
-  color,
-  size,
-}) => (
-  <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`}>
-    <polygon
-      points={`${size * 0.5},${size * 0.05} ${size * 0.95},${size * 0.25} ${
-        size * 0.95
-      },${size * 0.75} ${size * 0.5},${size * 0.95} ${size * 0.05},${
-        size * 0.75
-      } ${size * 0.05},${size * 0.25}`}
-      fill="none"
-      stroke={color}
-      strokeWidth="2"
-    />
+const RectangleShape: React.FC<{ color: string; size: number }> = ({ color, size }) => (
+  <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="pointer-events-none">
+    <rect x="2" y="2" width={size - 4} height={size - 4} rx="8" fill="none" stroke={color} strokeWidth="2" />
   </svg>
 );
 
-const CylinderShape: React.FC<{ color: string; size: number }> = ({
-  color,
-  size,
-}) => (
-  <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`}>
-    <ellipse
-      cx={size / 2}
-      cy={size * 0.2}
-      rx={size * 0.35}
-      ry={size * 0.12}
-      fill="none"
-      stroke={color}
-      strokeWidth="2"
-    />
-    <line
-      x1={size * 0.15}
-      y1={size * 0.2}
-      x2={size * 0.15}
-      y2={size * 0.8}
-      stroke={color}
-      strokeWidth="2"
-    />
-    <line
-      x1={size * 0.85}
-      y1={size * 0.2}
-      x2={size * 0.85}
-      y2={size * 0.8}
-      stroke={color}
-      strokeWidth="2"
-    />
-    <ellipse
-      cx={size / 2}
-      cy={size * 0.8}
-      rx={size * 0.35}
-      ry={size * 0.12}
-      fill="none"
-      stroke={color}
-      strokeWidth="2"
-    />
+const ParallelogramShape: React.FC<{ color: string; size: number }> = ({ color, size }) => (
+  <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="pointer-events-none">
+    <polygon points={`${size * 0.2},2 ${size - 2},2 ${size * 0.8},${size - 2} 2,${size - 2}`} fill="none" stroke={color} strokeWidth="2" />
   </svg>
 );
 
-const RectangleShape: React.FC<{ color: string; size: number }> = ({
-  color,
-  size,
-}) => (
-  <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`}>
-    <rect
-      x="2"
-      y="2"
-      width={size - 4}
-      height={size - 4}
-      rx="8"
-      fill="none"
-      stroke={color}
-      strokeWidth="2"
-    />
-  </svg>
-);
-
-const ParallelogramShape: React.FC<{ color: string; size: number }> = ({
-  color,
-  size,
-}) => (
-  <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`}>
-    <polygon
-      points={`${size * 0.2},2 ${size - 2},2 ${size * 0.8},${size - 2} 2,${
-        size - 2
-      }`}
-      fill="none"
-      stroke={color}
-      strokeWidth="2"
-    />
-  </svg>
-);
-
-const ShapeRenderer: React.FC<{
-  shapeType: ShapeType;
-  color: string;
-  size?: number;
-}> = ({ shapeType, color, size = 120 }) => {
+const ShapeRenderer: React.FC<{ shapeType: ShapeType; color: string; size?: number }> = ({ shapeType, color, size = 120 }) => {
   switch (shapeType) {
     case "circle":
       return <CircleShape color={color} size={size} />;
@@ -193,22 +99,11 @@ const ShapeRenderer: React.FC<{
 };
 
 const COLOR_PALETTE = [
-  "#ef4444",
-  "#f97316",
-  "#eab308",
-  "#22c55e",
-  "#3b82f6",
-  "#6366f1",
-  "#a855f7",
-  "#ec4899",
+  "#ef4444", "#f97316", "#eab308", "#22c55e",
+  "#3b82f6", "#6366f1", "#a855f7", "#ec4899",
 ];
 
-export const WorkflowNode: React.FC<CustomNodeProps> = ({
-  data,
-  isConnectable,
-  selected,
-  id,
-}) => {
+export const WorkflowNode: React.FC<CustomNodeProps> = ({ data, isConnectable, selected, id }) => {
   const shapeType = (data.shapeType || "rectangle") as ShapeType;
   const color = nodeColor(data);
   const updateNode = useWorkflowStore((state) => state.updateNode);
@@ -239,47 +134,21 @@ export const WorkflowNode: React.FC<CustomNodeProps> = ({
 
   return (
     <div
+      className="relative w-full h-full flex flex-col items-center justify-center bg-transparent transition-all duration-200"
       style={{
-        position: "relative",
-        width: "100%",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "transparent",
-        transition: "all 0.2s ease",
         filter: selected ? `drop-shadow(0 0 10px ${color}60)` : "none",
         minWidth: "100px",
         minHeight: "100px",
       }}
     >
       {/* NODE RESIZER */}
-      <NodeResizer
-        color={color}
-        isVisible={selected}
-        minWidth={80}
-        minHeight={80}
-        maxWidth={400}
-        maxHeight={400}
-      />
+      <NodeResizer color={color} isVisible={selected} minWidth={80} minHeight={80} maxWidth={400} maxHeight={400} />
 
       {/* INLINE COLOR PICKER (WHEN SELECTED) */}
       {selected && (
         <div
-          style={{
-            position: "absolute",
-            top: "-32px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            display: "flex",
-            gap: "4px",
-            padding: "2px 4px",
-            background: "rgba(17,24,39,0.9)",
-            borderRadius: "999px",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
-            zIndex: 20,
-          }}
+          className="absolute -top-8 left-1/2 -translate-x-1/2 flex gap-1 px-1 py-0.5 bg-gray-900/90 rounded-full shadow-md z-20"
+          onClick={(e) => e.stopPropagation()}
         >
           {COLOR_PALETTE.map((c) => (
             <button
@@ -288,36 +157,19 @@ export const WorkflowNode: React.FC<CustomNodeProps> = ({
                 e.stopPropagation();
                 handleColorChange(c);
               }}
+              className="w-4 h-4 rounded-full cursor-pointer transition-transform hover:scale-110"
               style={{
-                width: "16px",
-                height: "16px",
-                borderRadius: "999px",
-                border: c === color ? "2px solid white" : "1px solid #e5e7eb",
                 background: c,
-                cursor: "pointer",
+                border: c === color ? "2px solid white" : "1px solid #e5e7eb",
               }}
+              title={`Change to ${c}`}
             />
           ))}
         </div>
       )}
 
       {/* Shape Outline - fills entire resizable box */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          pointerEvents: "none",
-          margin: 0,
-          padding: 0,
-          overflow: "hidden",
-        }}
-      >
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none m-0 p-0 overflow-hidden">
         <ShapeRenderer shapeType={shapeType} color={color} />
       </div>
 
@@ -335,45 +187,14 @@ export const WorkflowNode: React.FC<CustomNodeProps> = ({
               setIsEditing(false);
             }
           }}
-          style={{
-            position: "relative",
-            zIndex: 2,
-            textAlign: "center",
-            maxWidth: "85%",
-            color: color,
-            fontWeight: 500,
-            fontSize: "clamp(11px, 2vw, 14px)",
-            lineHeight: "1.3",
-            padding: "2px 4px",
-            borderRadius: "4px",
-            border: `1px solid ${color}`,
-            background: "rgba(255,255,255,0.9)",
-            outline: "none",
-          }}
+          className="relative z-10 text-center max-w-[85%] font-medium text-[clamp(11px,2vw,14px)] leading-tight px-1 py-0.5 rounded border bg-white/90 outline-none"
+          style={{ color, borderColor: color }}
         />
       ) : (
         <div
           onDoubleClick={handleTextClick}
-          style={{
-            position: "relative",
-            zIndex: 1,
-            textAlign: "center",
-            maxWidth: "85%",
-            maxHeight: "85%",
-            color: color,
-            fontWeight: 500,
-            fontSize: "clamp(11px, 2vw, 14px)",
-            lineHeight: "1.3",
-            wordWrap: "break-word",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "text",
-            userSelect: "text",
-            overflow: "hidden",
-            margin: 0,
-            padding: "8px",
-          }}
+          className="relative z-[1] text-center max-w-[85%] max-h-[85%] font-medium text-[clamp(11px,2vw,14px)] leading-tight break-words flex items-center justify-center cursor-text select-text overflow-hidden m-0 p-2"
+          style={{ color }}
         >
           {data.name}
         </div>
@@ -382,24 +203,8 @@ export const WorkflowNode: React.FC<CustomNodeProps> = ({
       {/* Sticker Badge (Bottom Right) */}
       {data.sticker && (
         <div
-          style={{
-            position: "absolute",
-            bottom: "-10px",
-            right: "-10px",
-            width: "36px",
-            height: "36px",
-            borderRadius: "50%",
-            background: "white",
-            border: `2px solid ${color}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "18px",
-            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.12)",
-            zIndex: 10,
-            margin: 0,
-            padding: 0,
-          }}
+          className="absolute -bottom-2.5 -right-2.5 w-9 h-9 rounded-full bg-white flex items-center justify-center text-lg shadow-md z-10"
+          style={{ border: `2px solid ${color}` }}
           title={getStickerConfig(data.sticker as any).description}
         >
           {getStickerConfig(data.sticker as any).icon}
@@ -412,88 +217,56 @@ export const WorkflowNode: React.FC<CustomNodeProps> = ({
         id="top-target"
         position={Position.Top}
         isConnectable={isConnectable}
-        style={{
-          top: "-6px",
-          left: "50%",
-          transform: "translateX(-50%)",
-        }}
+        className="-top-1.5 left-1/2 -translate-x-1/2"
       />
       <Handle
         type="source"
         id="top-source"
         position={Position.Top}
         isConnectable={isConnectable}
-        style={{
-          top: "-6px",
-          left: "50%",
-          transform: "translateX(-50%)",
-        }}
+        className="-top-1.5 left-1/2 -translate-x-1/2"
       />
       <Handle
         type="target"
         id="bottom-target"
         position={Position.Bottom}
         isConnectable={isConnectable}
-        style={{
-          bottom: "-6px",
-          left: "50%",
-          transform: "translateX(-50%)",
-        }}
+        className="-bottom-1.5 left-1/2 -translate-x-1/2"
       />
       <Handle
         type="source"
         id="bottom-source"
         position={Position.Bottom}
         isConnectable={isConnectable}
-        style={{
-          bottom: "-6px",
-          left: "50%",
-          transform: "translateX(-50%)",
-        }}
+        className="-bottom-1.5 left-1/2 -translate-x-1/2"
       />
       <Handle
         type="target"
         id="left-target"
         position={Position.Left}
         isConnectable={isConnectable}
-        style={{
-          left: "-6px",
-          top: "50%",
-          transform: "translateY(-50%)",
-        }}
+        className="-left-1.5 top-1/2 -translate-y-1/2"
       />
       <Handle
         type="source"
         id="left-source"
         position={Position.Left}
         isConnectable={isConnectable}
-        style={{
-          left: "-6px",
-          top: "50%",
-          transform: "translateY(-50%)",
-        }}
+        className="-left-1.5 top-1/2 -translate-y-1/2"
       />
       <Handle
         type="target"
         id="right-target"
         position={Position.Right}
         isConnectable={isConnectable}
-        style={{
-          right: "-6px",
-          top: "50%",
-          transform: "translateY(-50%)",
-        }}
+        className="-right-1.5 top-1/2 -translate-y-1/2"
       />
       <Handle
         type="source"
         id="right-source"
         position={Position.Right}
         isConnectable={isConnectable}
-        style={{
-          right: "-6px",
-          top: "50%",
-          transform: "translateY(-50%)",
-        }}
+        className="-right-1.5 top-1/2 -translate-y-1/2"
       />
     </div>
   );
