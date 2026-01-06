@@ -25,7 +25,6 @@ import {
   initialEdges,
   initialNodes,
   nodeTypes,
-  snapGrid,
 } from "@/features/workflow/constants";
 import { ContextMenu } from "@/features/workflow/components/ContextMenu";
 import { EditNodeForm } from "@/features/workflow/components/EditNodeForm";
@@ -33,18 +32,12 @@ import { useEditNode } from "./state/use-edit-node";
 import { UndoRedo } from "./components/UndoRedo";
 import { useWorkflowStore } from "./state/use-flow-store";
 import { createNode } from "./utils/nodes.utils";
-import { ExportButton } from "./components/ExportButton";
-import { useExportGraph } from "./hooks/useExportGraph";
 
 function DnDFlow() {
-  // THIS IS THE KEY REF - for capturing the flow
   const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
-  
-  // Your existing refs
   const ref = useRef(null);
   const edgeReconnectSuccessful = useRef(true);
 
-  // Store
   const {
     nodes,
     edges,
@@ -58,15 +51,6 @@ function DnDFlow() {
     reconnectOldEdge,
   } = useWorkflowStore();
 
-  // Export hook - pass the wrapper ref
-  const {
-    exportAsPNG,
-    exportAsGIF,
-    exportAsSVG,
-    exportAsJSON,
-  } = useExportGraph();
-
-  // Edit node
   const setNodeId = useEditNode((state) => state.setNodeId);
   const [menu, setMenu] = useState<{
     top: number | undefined;
@@ -78,63 +62,6 @@ function DnDFlow() {
   const { screenToFlowPosition } = useReactFlow();
   const [nodeType, setNodeType] = useNodeType();
 
-  // Export handlers
-  const handleExportPNG = async () => {
-    if (!reactFlowWrapper.current) return;
-    
-    // Create a temporary container to capture
-    const container = reactFlowWrapper.current;
-    
-    try {
-      await exportAsPNG({
-        containerRef: { current: container },
-        filename: `workflow-${new Date().toISOString().split("T")[0]}.png`,
-        backgroundColor: "#ffffff",
-        scale: 2,
-      });
-    } catch (error) {
-      console.error("Export failed:", error);
-    }
-  };
-
-  const handleExportGIF = async () => {
-    if (!reactFlowWrapper.current) return;
-    
-    const container = reactFlowWrapper.current;
-    
-    try {
-      await exportAsGIF({
-        containerRef: { current: container },
-        filename: `workflow-${new Date().toISOString().split("T")[0]}.gif`,
-        backgroundColor: "#ffffff",
-        scale: 2,
-        gifFrames: 60,
-        gifDelay: 50,
-        gifQuality: 10,
-      });
-    } catch (error) {
-      console.error("GIF export failed:", error);
-    }
-  };
-
-  const handleExportSVG = () => {
-    if (!reactFlowWrapper.current) return;
-    
-    const container = reactFlowWrapper.current;
-    
-    exportAsSVG({
-      containerRef: { current: container },
-      filename: `workflow-${new Date().toISOString().split("T")[0]}.svg`,
-    });
-  };
-
-  const handleExportJSON = () => {
-    exportAsJSON(
-      `workflow-${new Date().toISOString().split("T")[0]}.json`
-    );
-  };
-
-  // Your existing handlers
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
@@ -213,25 +140,6 @@ function DnDFlow() {
 
   return (
     <div className="h-screen w-full border" ref={reactFlowWrapper}>
-      {/* TOP TOOLBAR WITH EXPORT BUTTON */}
-      <div
-        style={{
-          position: "absolute",
-          top: 10,
-          right: 10,
-          zIndex: 100,
-          display: "flex",
-          gap: "8px",
-        }}
-      >
-        <ExportButton
-          onExportPNG={handleExportPNG}
-          onExportGIF={handleExportGIF}
-          onExportSVG={handleExportSVG}
-          onExportJSON={handleExportJSON}
-        />
-      </div>
-
       <ReactFlow
         fitView
         ref={ref}
@@ -250,8 +158,6 @@ function DnDFlow() {
         onReconnect={onReconnect}
         onPaneClick={onPaneClick}
         onNodeContextMenu={onNodeContextMenu}
-        snapToGrid={true}
-        snapGrid={snapGrid}
       >
         <DraggablePanel />
         <Background />
