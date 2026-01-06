@@ -27,7 +27,7 @@ export const ToolPallete: React.FC = () => {
   };
 
   return (
-    <Panel position="top-left" className="flex flex-col gap-2 border p-2 rounded-xl bg-white shadow-md max-w-xs dark:bg-gray-800 dark:border-gray-700">
+    <Panel position="top-left" className="flex flex-col gap-2 border p-2 rounded-xl bg-white shadow-md w-52 dark:bg-gray-800 dark:border-gray-700">
       {/* Title */}
       <h3 className="text-xs font-bold text-gray-700 px-1 dark:text-gray-200">Shapes</h3>
 
@@ -47,7 +47,7 @@ export const ToolPallete: React.FC = () => {
               draggable
               title={config.description}
             >
-              <span style={{ fontSize: '16px', marginBottom: '2px' }}>
+              <span style={{ fontSize: '16px', marginBottom: '2px',color:"black" }}>
                 {config.icon}
               </span>
               <span className="text-xs font-semibold text-gray-700 dark:text-gray-300" style={{ color: config.color }}>

@@ -1,0 +1,5 @@
+- remove '.' handles to floating edge so that they can stick to anywhere in the component
+- the resizable box should only do resizing, for taking and originating edge it should be the work of component so edges should go to component directly not the resizer box
+- the names inside the component should also increase or decrease according to the components size
+- currently components cannot be created smaller much, so reduce their min limit and make them be smaller while resizing
+- while editing the name of the component the input is ruining the experience by stretching the size of component and showing input's border, so make it dont get stretched, and dont show the input or its border, the editing should be done exactly like how excalidraw and other tools provide
