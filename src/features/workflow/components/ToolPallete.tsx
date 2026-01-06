@@ -4,13 +4,19 @@ import { useNodeType } from '@/features/workflow/hooks/useNodeType';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { SaveWorkflow } from '@/features/workflow/components/SaveWorkflow';
-import { Settings } from 'lucide-react';
+import { Settings, Eraser } from 'lucide-react';
 import { getAllShapes, getShapeConfig, getAllStickers, getStickerConfig } from '@/features/workflow/constants/shape-config';
 import { ShapeType, StickerType } from '@/features/workflow/constants/shape-config';
+import { useEraserMode } from '@/features/workflow/hooks/use-eraser-mode';
+import { useWorkflowStore } from '@/features/workflow/state/use-flow-store';
 
 export const ToolPallete: React.FC = () => {
   const [_, setType] = useNodeType();
   const [showStickerPicker, setShowStickerPicker] = useState(false);
+  const { eraserMode, toggleEraserMode } = useEraserMode({
+    removeNode: useWorkflowStore((state) => state.removeNode),
+    removeEdge: useWorkflowStore((state) => state.removeEdge),
+  });
 
   const shapes = getAllShapes();
   const stickers = getAllStickers();
@@ -21,9 +27,9 @@ export const ToolPallete: React.FC = () => {
   };
 
   return (
-    <Panel position="top-left" className="flex flex-col gap-2 border p-2 rounded-xl bg-white shadow-md max-w-xs">
+    <Panel position="top-left" className="flex flex-col gap-2 border p-2 rounded-xl bg-white shadow-md max-w-xs dark:bg-gray-800 dark:border-gray-700">
       {/* Title */}
-      <h3 className="text-xs font-bold text-gray-700 px-1">Shapes</h3>
+      <h3 className="text-xs font-bold text-gray-700 px-1 dark:text-gray-200">Shapes</h3>
 
       {/* Shapes Grid - Minimal Design */}
       <div className="grid grid-cols-4 gap-1">
@@ -32,7 +38,7 @@ export const ToolPallete: React.FC = () => {
           return (
             <button
               key={shapeType}
-              className="flex flex-col items-center justify-center p-1.5 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200 hover:border-gray-300"
+              className="flex flex-col items-center justify-center p-1.5 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200 hover:border-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
               style={{
                 backgroundColor: config.lightColor,
               }}
@@ -44,7 +50,7 @@ export const ToolPallete: React.FC = () => {
               <span style={{ fontSize: '16px', marginBottom: '2px' }}>
                 {config.icon}
               </span>
-              <span className="text-xs font-semibold text-gray-700" style={{ color: config.color }}>
+              <span className="text-xs font-semibold text-gray-700 dark:text-gray-300" style={{ color: config.color }}>
                 {config.name.slice(0, 4)}
               </span>
             </button>
@@ -53,35 +59,48 @@ export const ToolPallete: React.FC = () => {
       </div>
 
       {/* Divider */}
-      <div className="border-t border-gray-200 my-1" />
+      <div className="border-t border-gray-200 my-1 dark:border-gray-600" />
 
-      {/* Sticker Picker & Settings */}
+      {/* Tools Row */}
       <div className="flex gap-1 justify-center">
+        {/* Eraser Toggle */}
+        <Button
+          variant={eraserMode ? "destructive" : "secondary"}
+          size="sm"
+          onClick={toggleEraserMode}
+          className="text-xs py-1 px-2 h-7 flex items-center gap-1"
+          title={eraserMode ? "Disable eraser mode (E)" : "Enable eraser mode (E)"}
+        >
+          <Eraser className="w-3 h-3" />
+          {eraserMode ? "ON" : "OFF"}
+        </Button>
+
         {/* Sticker Picker */}
         <Popover open={showStickerPicker} onOpenChange={setShowStickerPicker}>
           <PopoverTrigger asChild>
             <Button
               variant="secondary"
+              size="sm"
               className="text-xs py-1 px-2 h-7"
               title="Add sticker badge to selected node"
             >
               ✨ Sticker
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-60 p-2">
-            <h4 className="text-xs font-semibold mb-2">Stickers</h4>
+          <PopoverContent className="w-60 p-2 dark:bg-gray-800 dark:border-gray-700">
+            <h4 className="text-xs font-semibold mb-2 dark:text-gray-200">Stickers</h4>
             <div className="grid grid-cols-5 gap-1">
               {stickers.map((stickerType) => {
                 const config = getStickerConfig(stickerType);
                 return (
                   <button
                     key={stickerType}
-                    className="p-1.5 rounded hover:bg-gray-100 transition-colors flex flex-col items-center gap-0.5 group"
+                    className="p-1.5 rounded hover:bg-gray-100 transition-colors flex flex-col items-center gap-0.5 group dark:hover:bg-gray-700"
                     onClick={() => setShowStickerPicker(false)}
                     title={config.description}
                   >
                     <span className="text-lg">{config.icon}</span>
-                    <span className="text-xs text-gray-600 group-hover:text-gray-900 text-center">
+                    <span className="text-xs text-gray-600 group-hover:text-gray-900 text-center dark:text-gray-400 dark:group-hover:text-gray-200">
                       {config.name}
                     </span>
                   </button>
@@ -97,14 +116,13 @@ export const ToolPallete: React.FC = () => {
         {/* Settings */}
         <Popover>
           <PopoverTrigger asChild>
-            <div className="cursor-pointer inline-flex items-center justify-center p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors border border-gray-200 h-7 w-7">
-              <Settings className="w-4 h-4 text-gray-600" />
+            <div className="cursor-pointer inline-flex items-center justify-center p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors border border-gray-200 h-7 w-7 dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600">
+              <Settings className="w-4 h-4 text-gray-600 dark:text-gray-300" />
             </div>
           </PopoverTrigger>
-          <PopoverContent className="w-48 p-2">
+          <PopoverContent className="w-48 p-2 dark:bg-gray-800 dark:border-gray-700">
             <div className="flex flex-col gap-2">
-              {/* You can add Import/Export here if needed */}
-              <p className="text-xs text-gray-600">Settings & Export/Import</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">Settings & Export/Import</p>
             </div>
           </PopoverContent>
         </Popover>
