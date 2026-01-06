@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import { Handle, NodeResizer, Position } from "@xyflow/react";
 import {
   ShapeType,
@@ -6,6 +6,7 @@ import {
   getStickerConfig,
 } from "@/features/workflow/constants/shape-config";
 import { getNodeColor as nodeColor } from "@/features/workflow/utils/nodes.utils";
+import { useWorkflowStore } from "../state/use-flow-store";
 
 interface CustomNodeProps {
   data: {
@@ -30,7 +31,7 @@ const CircleShape: React.FC<{ color: string; size: number }> = ({
   color,
   size,
 }) => (
-  <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+  <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`}>
     <circle
       cx={size / 2}
       cy={size / 2}
@@ -46,7 +47,7 @@ const TriangleShape: React.FC<{ color: string; size: number }> = ({
   color,
   size,
 }) => (
-  <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+  <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`}>
     <polygon
       points={`${size / 2},2 ${size - 2},${size - 2} 2,${size - 2}`}
       fill="none"
@@ -60,7 +61,7 @@ const DiamondShape: React.FC<{ color: string; size: number }> = ({
   color,
   size,
 }) => (
-  <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+  <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`}>
     <polygon
       points={`${size / 2},2 ${size - 2},${size / 2} ${size / 2},${
         size - 2
@@ -76,7 +77,7 @@ const HexagonShape: React.FC<{ color: string; size: number }> = ({
   color,
   size,
 }) => (
-  <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+  <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`}>
     <polygon
       points={`${size * 0.5},${size * 0.05} ${size * 0.95},${size * 0.25} ${
         size * 0.95
@@ -94,7 +95,7 @@ const CylinderShape: React.FC<{ color: string; size: number }> = ({
   color,
   size,
 }) => (
-  <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+  <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`}>
     <ellipse
       cx={size / 2}
       cy={size * 0.2}
@@ -136,7 +137,7 @@ const RectangleShape: React.FC<{ color: string; size: number }> = ({
   color,
   size,
 }) => (
-  <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+  <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`}>
     <rect
       x="2"
       y="2"
@@ -154,7 +155,7 @@ const ParallelogramShape: React.FC<{ color: string; size: number }> = ({
   color,
   size,
 }) => (
-  <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+  <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`}>
     <polygon
       points={`${size * 0.2},2 ${size - 2},2 ${size * 0.8},${size - 2} 2,${
         size - 2
@@ -191,199 +192,16 @@ const ShapeRenderer: React.FC<{
   }
 };
 
-/**
- * Main CustomNode Component - Clean UI with Thin Borders
- * - No default text (user writes labels)
- * - Stickers render properly
- * - Thin 2px borders
- * - All-side connection (no handles visible)
- */
-// export const WorkflowNode: React.FC<CustomNodeProps> = ({
-//   data,
-//   isConnectable,
-//   selected,
-//   id,
-// }) => {
-//   const shapeType = (data.shapeType || "rectangle") as ShapeType;
-//   const color = nodeColor(data);
-
-//   const handleStyle = {
-//     // margin: "0 !important",
-//     // padding: "0 !important",
-//     // // all: "revert" as any,  
-//     // background: "transparent",
-//     // border: "none",
-//     // width: "100%",
-//     // height: "8px",
-//     // borderRadius: "0",
-//   };
-
-//   return (
-//     <div
-//       style={{
-//         position: "relative",
-//         // border:"2px",
-//         width: "140px",
-//         height: "140px",
-//         display: "flex",
-//         flexDirection: "column",
-//         alignItems: "center",
-//         justifyContent: "center",
-//         background: "transparent",
-//         transition: "all 0.2s ease",
-//         filter: selected ? `drop-shadow(0 0 10px ${color}60)` : "none",
-//       }}
-//     >
-//       {/* Shape Outline */}
-//       <div
-//         style={{
-//           position: "absolute",
-//           top: 0,
-//           left: 0,
-//           width: "100%",
-//           height: "100%",
-//           display: "flex",
-//           alignItems: "center",
-//           justifyContent: "center",
-//           pointerEvents: "none",
-//         }}
-//       >
-//         <ShapeRenderer shapeType={shapeType} color={color} size={120} />
-//       </div>
-
-//       {/* User Text Content - Editable by double-click */}
-//       <div
-//         style={{
-//           position: "relative",
-//           zIndex: 1,
-//           textAlign: "center",
-//           maxWidth: "110px",
-//           color: color,
-//           fontWeight: "500",
-//           fontSize: "13px",
-//           lineHeight: "1.3",
-//           wordWrap: "break-word",
-//           minHeight: "40px",
-//           display: "flex",
-//           alignItems: "center",
-//           justifyContent: "center",
-//           cursor: "text",
-//           userSelect: "text",
-//         }}
-//       >
-//         {data.name}
-//       </div>
-
-//       {/* Sticker Badge (Bottom Right) */}
-//       {data.sticker && (
-//         <div
-//           style={{
-//             position: "absolute",
-//             bottom: "-8px",
-//             right: "-8px",
-//             width: "32px",
-//             height: "32px",
-//             borderRadius: "50%",
-//             background: "white",
-//             border: `2px solid ${color}`,
-//             display: "flex",
-//             alignItems: "center",
-//             justifyContent: "center",
-//             fontSize: "18px",
-//             boxShadow: "0 2px 6px rgba(0, 0, 0, 0.12)",
-//             zIndex: 10,
-//           }}
-//           title={getStickerConfig(data.sticker as any).description}
-//         >
-//           {getStickerConfig(data.sticker as any).icon}
-//         </div>
-//       )}
-
-//       {/* Connection Handles - Hidden but Present (Connect from any side) */}
-//       {/* These are invisible but allow connections from all sides */}
-//       <Handle
-//         type="target"
-//         id='top-target'
-//         position={Position.Top}
-//         isConnectable={isConnectable}
-//         style={{
-//           ...handleStyle,
-//           // top: "-4px",
-//         }}
-//       />
-//       <Handle
-//         type="source"
-//         id="top-source"
-//         position={Position.Top}
-//         isConnectable={isConnectable}
-//         style={{
-//           ...handleStyle,
-//           // top: "-4px",
-//         }}
-//       />
-//       <Handle
-//         type="source"
-//         id="bottom-source"
-//         position={Position.Bottom}
-//         isConnectable={isConnectable}
-//         style={{
-//           ...handleStyle,
-//           // bottom: "-4px",
-//         }}
-//       />
-//       <Handle
-//         type="target"
-//         id="bottom-target"
-//         position={Position.Bottom}
-//         isConnectable={isConnectable}
-//         style={{
-//           ...handleStyle,
-//           // bottom: "-4px",
-//         }}
-//       />
-//       <Handle
-//         type="source"
-//         id="left-source"
-//         position={Position.Left}
-//         isConnectable={isConnectable}
-//         style={{
-//           ...handleStyle,
-//           // left: "-4px",
-//         }}
-//       />
-//       <Handle
-//         type="target"
-//         id="left-target"
-//         position={Position.Left}
-//         isConnectable={isConnectable}
-//         style={{
-//           ...handleStyle,
-//           // left: "-4px",
-//         }}
-//       />
-//       <Handle
-//         type="source"
-//         id="right-source"
-//         position={Position.Right}
-//         isConnectable={isConnectable}
-//         style={{
-//           ...handleStyle,
-//           // right: "-4px",
-//         }}
-//       />
-//       <Handle
-//         type="target"
-//         id="right-target"
-//         position={Position.Right}
-//         isConnectable={isConnectable}
-//         style={{
-//           ...handleStyle,
-//           // right: "-4px",
-//         }}
-//       />
-//     </div>
-//   );
-// };
+const COLOR_PALETTE = [
+  "#ef4444",
+  "#f97316",
+  "#eab308",
+  "#22c55e",
+  "#3b82f6",
+  "#6366f1",
+  "#a855f7",
+  "#ec4899",
+];
 
 export const WorkflowNode: React.FC<CustomNodeProps> = ({
   data,
@@ -393,14 +211,31 @@ export const WorkflowNode: React.FC<CustomNodeProps> = ({
 }) => {
   const shapeType = (data.shapeType || "rectangle") as ShapeType;
   const color = nodeColor(data);
+  const updateNode = useWorkflowStore((state) => state.updateNode);
 
-  // Calculate SVG shape size based on container (responsive)
-  const calculateShapeSize = (containerWidth: number, containerHeight: number) => {
-    const minSize = 40;
-    const maxSize = 180;
-    const avgSize = Math.min(containerWidth, containerHeight) - 20;
-    return Math.max(minSize, Math.min(maxSize, avgSize));
-  };
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(data.name);
+
+  const handleTextClick = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      setEditValue(data.name);
+      setIsEditing(true);
+    },
+    [data.name]
+  );
+
+  const handleEditSubmit = useCallback(() => {
+    updateNode(id, { name: editValue });
+    setIsEditing(false);
+  }, [id, editValue, updateNode]);
+
+  const handleColorChange = useCallback(
+    (newColor: string) => {
+      updateNode(id, { customColor: newColor });
+    },
+    [id, updateNode]
+  );
 
   return (
     <div
@@ -419,7 +254,7 @@ export const WorkflowNode: React.FC<CustomNodeProps> = ({
         minHeight: "100px",
       }}
     >
-      {/* NODE RESIZER - Shows corner handles when selected */}
+      {/* NODE RESIZER */}
       <NodeResizer
         color={color}
         isVisible={selected}
@@ -427,83 +262,122 @@ export const WorkflowNode: React.FC<CustomNodeProps> = ({
         minHeight={80}
         maxWidth={400}
         maxHeight={400}
-        onResizeStart={() => {
-          // Optional: Add custom logic on resize start
-        }}
-        onResize={() => {
-          // Optional: Add custom logic during resize
-        }}
-        onResizeEnd={() => {
-          // Optional: Add custom logic on resize end
-        }}
       />
 
-      {/* Shape Outline - SVG (scales with node size) */}
+      {/* INLINE COLOR PICKER (WHEN SELECTED) */}
+      {selected && (
+        <div
+          style={{
+            position: "absolute",
+            top: "-32px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            display: "flex",
+            gap: "4px",
+            padding: "2px 4px",
+            background: "rgba(17,24,39,0.9)",
+            borderRadius: "999px",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+            zIndex: 20,
+          }}
+        >
+          {COLOR_PALETTE.map((c) => (
+            <button
+              key={c}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleColorChange(c);
+              }}
+              style={{
+                width: "16px",
+                height: "16px",
+                borderRadius: "999px",
+                border: c === color ? "2px solid white" : "1px solid #e5e7eb",
+                background: c,
+                cursor: "pointer",
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Shape Outline - fills entire resizable box */}
       <div
         style={{
           position: "absolute",
-          top: "10px",
-          left: "10px",
-          right: "10px",
-          bottom: "10px",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           pointerEvents: "none",
-          margin: "0",
-          padding: "0",
+          margin: 0,
+          padding: 0,
           overflow: "hidden",
         }}
       >
-        <div
+        <ShapeRenderer shapeType={shapeType} color={color} />
+      </div>
+
+      {/* TEXT / INLINE EDITOR */}
+      {isEditing ? (
+        <input
+          autoFocus
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onBlur={handleEditSubmit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleEditSubmit();
+            if (e.key === "Escape") {
+              setEditValue(data.name);
+              setIsEditing(false);
+            }
+          }}
           style={{
-            width: "100%",
-            height: "100%",
+            position: "relative",
+            zIndex: 2,
+            textAlign: "center",
+            maxWidth: "85%",
+            color: color,
+            fontWeight: 500,
+            fontSize: "clamp(11px, 2vw, 14px)",
+            lineHeight: "1.3",
+            padding: "2px 4px",
+            borderRadius: "4px",
+            border: `1px solid ${color}`,
+            background: "rgba(255,255,255,0.9)",
+            outline: "none",
+          }}
+        />
+      ) : (
+        <div
+          onDoubleClick={handleTextClick}
+          style={{
+            position: "relative",
+            zIndex: 1,
+            textAlign: "center",
+            maxWidth: "85%",
+            maxHeight: "85%",
+            color: color,
+            fontWeight: 500,
+            fontSize: "clamp(11px, 2vw, 14px)",
+            lineHeight: "1.3",
+            wordWrap: "break-word",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            cursor: "text",
+            userSelect: "text",
+            overflow: "hidden",
+            margin: 0,
+            padding: "8px",
           }}
         >
-          <ShapeRenderer
-            shapeType={shapeType}
-            color={color}
-            size={calculateShapeSize(
-              typeof window !== "undefined"
-                ? Math.min(window.innerWidth, 400)
-                : 120,
-              typeof window !== "undefined"
-                ? Math.min(window.innerHeight, 400)
-                : 120
-            )}
-          />
+          {data.name}
         </div>
-      </div>
-
-      {/* User Text Content - Editable, responsive font size */}
-      <div
-        style={{
-          position: "relative",
-          zIndex: 1,
-          textAlign: "center",
-          maxWidth: "85%",
-          maxHeight: "85%",
-          color: color,
-          fontWeight: "500",
-          fontSize: "clamp(11px, 2vw, 14px)",
-          lineHeight: "1.3",
-          wordWrap: "break-word",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "text",
-          userSelect: "text",
-          overflow: "hidden",
-          margin: "0",
-          padding: "8px",
-        }}
-      >
-        {data.name}
-      </div>
+      )}
 
       {/* Sticker Badge (Bottom Right) */}
       {data.sticker && (
@@ -523,8 +397,8 @@ export const WorkflowNode: React.FC<CustomNodeProps> = ({
             fontSize: "18px",
             boxShadow: "0 2px 6px rgba(0, 0, 0, 0.12)",
             zIndex: 10,
-            margin: "0",
-            padding: "0",
+            margin: 0,
+            padding: 0,
           }}
           title={getStickerConfig(data.sticker as any).description}
         >
@@ -532,17 +406,13 @@ export const WorkflowNode: React.FC<CustomNodeProps> = ({
         </div>
       )}
 
-      {/* ===== CONNECTION HANDLES - 8 TOTAL (4 SIDES × 2) ===== */}
-      {/* All handles have unique IDs and are positioned correctly */}
-
-      {/* TOP HANDLES */}
+      {/* CONNECTION HANDLES */}
       <Handle
         type="target"
         id="top-target"
         position={Position.Top}
         isConnectable={isConnectable}
         style={{
-          // ...handleStyle,
           top: "-6px",
           left: "50%",
           transform: "translateX(-50%)",
@@ -554,21 +424,17 @@ export const WorkflowNode: React.FC<CustomNodeProps> = ({
         position={Position.Top}
         isConnectable={isConnectable}
         style={{
-          // ...handleStyle,
           top: "-6px",
           left: "50%",
           transform: "translateX(-50%)",
         }}
       />
-
-      {/* BOTTOM HANDLES */}
       <Handle
         type="target"
         id="bottom-target"
         position={Position.Bottom}
         isConnectable={isConnectable}
         style={{
-          // ...handleStyle,
           bottom: "-6px",
           left: "50%",
           transform: "translateX(-50%)",
@@ -580,21 +446,17 @@ export const WorkflowNode: React.FC<CustomNodeProps> = ({
         position={Position.Bottom}
         isConnectable={isConnectable}
         style={{
-          // ...handleStyle,
           bottom: "-6px",
           left: "50%",
           transform: "translateX(-50%)",
         }}
       />
-
-      {/* LEFT HANDLES */}
       <Handle
         type="target"
         id="left-target"
         position={Position.Left}
         isConnectable={isConnectable}
         style={{
-          // ...handleStyle,
           left: "-6px",
           top: "50%",
           transform: "translateY(-50%)",
@@ -606,21 +468,17 @@ export const WorkflowNode: React.FC<CustomNodeProps> = ({
         position={Position.Left}
         isConnectable={isConnectable}
         style={{
-          // ...handleStyle,
           left: "-6px",
           top: "50%",
           transform: "translateY(-50%)",
         }}
       />
-
-      {/* RIGHT HANDLES */}
       <Handle
         type="target"
         id="right-target"
         position={Position.Right}
         isConnectable={isConnectable}
         style={{
-          // ...handleStyle,
           right: "-6px",
           top: "50%",
           transform: "translateY(-50%)",
@@ -632,7 +490,6 @@ export const WorkflowNode: React.FC<CustomNodeProps> = ({
         position={Position.Right}
         isConnectable={isConnectable}
         style={{
-          // ...handleStyle,
           right: "-6px",
           top: "50%",
           transform: "translateY(-50%)",
@@ -642,10 +499,6 @@ export const WorkflowNode: React.FC<CustomNodeProps> = ({
   );
 };
 
-
-/**
- * Helper function to get node color
- */
 export const getNodeColor = (nodeData: any): string => {
   if (nodeData.customColor) {
     return nodeData.customColor;

@@ -4,13 +4,11 @@ import {
   Connection,
   Controls,
   Edge,
-  FinalConnectionState,
   Node,
   NodeMouseHandler,
   Position,
   ReactFlow,
   ReactFlowProvider,
-  reconnectEdge,
   useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -31,11 +29,10 @@ import { EditNodeForm } from "@/features/workflow/components/EditNodeForm";
 import { useEditNode } from "./state/use-edit-node";
 import { UndoRedo } from "./components/UndoRedo";
 import { useWorkflowStore } from "./state/use-flow-store";
-import { createNode } from "./utils/nodes.utils";
 
 function DnDFlow() {
   const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement | null>(null);
   const edgeReconnectSuccessful = useRef(true);
 
   const {
@@ -46,6 +43,7 @@ function DnDFlow() {
     addNewNode,
     addNewEdge,
     removeEdge,
+    removeNode,
     onNodesChange,
     onEdgesChange,
     reconnectOldEdge,
@@ -61,6 +59,11 @@ function DnDFlow() {
 
   const { screenToFlowPosition } = useReactFlow();
   const [nodeType, setNodeType] = useNodeType();
+  const [eraserMode, setEraserMode] = useState(false);
+
+  const toggleEraserMode = useCallback(() => {
+    setEraserMode((prev) => !prev);
+  }, []);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -71,7 +74,7 @@ function DnDFlow() {
     (event: any) => {
       event.preventDefault();
       if (!nodeType) return;
-      
+
       const { clientX, clientY } =
         "changedTouches" in event ? event.changedTouches[0] : event;
       const position = screenToFlowPosition({
@@ -109,22 +112,22 @@ function DnDFlow() {
   const onNodeContextMenu: NodeMouseHandler<Node> = useCallback(
     (event, node: Node) => {
       event.preventDefault();
-      const pane = (ref.current as unknown as HTMLDivElement).getBoundingClientRect();
+      const pane = (ref.current as HTMLDivElement).getBoundingClientRect();
       const margin = 20;
-      
+
       let top = event.clientY;
       let left = event.clientX;
-      
+
       if (left + margin > pane.width) {
         left = pane.width - margin;
       }
       if (top + margin > pane.height) {
         top = pane.height - margin;
       }
-      
+
       const bottom = pane.height - top < margin ? top - margin : undefined;
       const right = pane.width - left < margin ? left - margin : undefined;
-      
+
       setMenu({ top, left, bottom, right });
       setNodeId(node.id);
     },
@@ -133,16 +136,48 @@ function DnDFlow() {
 
   const onPaneClick = useCallback(() => setMenu(null), [setMenu]);
 
+  const onNodeClick = useCallback(
+    (event: React.MouseEvent, node: Node) => {
+      if (!eraserMode) return;
+      event.preventDefault();
+      event.stopPropagation();
+      removeNode(node.id);
+    },
+    [eraserMode, removeNode]
+  );
+
+  const onEdgeClick = useCallback(
+    (event: React.MouseEvent, edge: Edge) => {
+      if (!eraserMode) return;
+      event.preventDefault();
+      event.stopPropagation();
+      removeEdge(edge.id);
+    },
+    [eraserMode, removeEdge]
+  );
+
   useEffect(() => {
     setNodes(initialNodes);
     setEdges(initialEdges);
   }, [setNodes, setEdges]);
 
   return (
-    <div className="h-screen w-full border" ref={reactFlowWrapper}>
+    <div className="relative h-screen w-full border" ref={reactFlowWrapper}>
+      <div className="absolute right-4 top-4 z-20 flex gap-2">
+        <button
+          type="button"
+          onClick={toggleEraserMode}
+          className={`rounded px-3 py-1 text-sm font-medium text-white shadow ${
+            eraserMode ? "bg-red-500" : "bg-gray-700"
+          }`}
+        >
+          {eraserMode ? "Eraser: ON" : "Eraser: OFF"}
+        </button>
+      </div>
+
       <ReactFlow
         fitView
-        ref={ref}
+        ref={ref as any}
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
@@ -158,6 +193,9 @@ function DnDFlow() {
         onReconnect={onReconnect}
         onPaneClick={onPaneClick}
         onNodeContextMenu={onNodeContextMenu}
+        onNodeClick={onNodeClick}
+        onEdgeClick={onEdgeClick}
+        style={{ cursor: eraserMode ? "crosshair" : "default" }}
       >
         <DraggablePanel />
         <Background />
