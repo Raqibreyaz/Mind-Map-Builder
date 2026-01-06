@@ -5,8 +5,6 @@ import {
   Controls,
   Edge,
   Node,
-  NodeMouseHandler,
-  Position,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
@@ -24,11 +22,9 @@ import {
   initialNodes,
   nodeTypes,
 } from "@/features/workflow/constants";
-import { ContextMenu } from "@/features/workflow/components/ContextMenu";
-import { EditNodeForm } from "@/features/workflow/components/EditNodeForm";
-import { useEditNode } from "./state/use-edit-node";
 import { UndoRedo } from "./components/UndoRedo";
 import { useWorkflowStore } from "./state/use-flow-store";
+import { useEraserMode } from "./hooks/use-eraser-mode";
 
 function DnDFlow() {
   const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
@@ -49,21 +45,12 @@ function DnDFlow() {
     reconnectOldEdge,
   } = useWorkflowStore();
 
-  const setNodeId = useEditNode((state) => state.setNodeId);
-  const [menu, setMenu] = useState<{
-    top: number | undefined;
-    left: number | undefined;
-    bottom: number | undefined;
-    right: number | undefined;
-  } | null>(null);
-
   const { screenToFlowPosition } = useReactFlow();
   const [nodeType, setNodeType] = useNodeType();
-  const [eraserMode, setEraserMode] = useState(false);
-
-  const toggleEraserMode = useCallback(() => {
-    setEraserMode((prev) => !prev);
-  }, []);
+  const { eraserMode, handleNodeMouseEnter, handleEdgeMouseEnter } = useEraserMode({
+    removeNode,
+    removeEdge,
+  });
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -109,52 +96,9 @@ function DnDFlow() {
     [removeEdge]
   );
 
-  const onNodeContextMenu: NodeMouseHandler<Node> = useCallback(
-    (event, node: Node) => {
-      event.preventDefault();
-      const pane = (ref.current as HTMLDivElement).getBoundingClientRect();
-      const margin = 20;
-
-      let top = event.clientY;
-      let left = event.clientX;
-
-      if (left + margin > pane.width) {
-        left = pane.width - margin;
-      }
-      if (top + margin > pane.height) {
-        top = pane.height - margin;
-      }
-
-      const bottom = pane.height - top < margin ? top - margin : undefined;
-      const right = pane.width - left < margin ? left - margin : undefined;
-
-      setMenu({ top, left, bottom, right });
-      setNodeId(node.id);
-    },
-    [setMenu, setNodeId]
-  );
-
-  const onPaneClick = useCallback(() => setMenu(null), [setMenu]);
-
-  const onNodeClick = useCallback(
-    (event: React.MouseEvent, node: Node) => {
-      if (!eraserMode) return;
-      event.preventDefault();
-      event.stopPropagation();
-      removeNode(node.id);
-    },
-    [eraserMode, removeNode]
-  );
-
-  const onEdgeClick = useCallback(
-    (event: React.MouseEvent, edge: Edge) => {
-      if (!eraserMode) return;
-      event.preventDefault();
-      event.stopPropagation();
-      removeEdge(edge.id);
-    },
-    [eraserMode, removeEdge]
-  );
+  const onPaneClick = useCallback(() => {
+    // Clear any selections when clicking on empty canvas
+  }, []);
 
   useEffect(() => {
     setNodes(initialNodes);
@@ -163,18 +107,6 @@ function DnDFlow() {
 
   return (
     <div className="relative h-screen w-full border" ref={reactFlowWrapper}>
-      <div className="absolute right-4 top-4 z-20 flex gap-2">
-        <button
-          type="button"
-          onClick={toggleEraserMode}
-          className={`rounded px-3 py-1 text-sm font-medium text-white shadow ${
-            eraserMode ? "bg-red-500" : "bg-gray-700"
-          }`}
-        >
-          {eraserMode ? "Eraser: ON" : "Eraser: OFF"}
-        </button>
-      </div>
-
       <ReactFlow
         fitView
         ref={ref as any}
@@ -192,18 +124,15 @@ function DnDFlow() {
         onReconnectEnd={onReconnectEnd}
         onReconnect={onReconnect}
         onPaneClick={onPaneClick}
-        onNodeContextMenu={onNodeContextMenu}
-        onNodeClick={onNodeClick}
-        onEdgeClick={onEdgeClick}
+        onNodeMouseEnter={handleNodeMouseEnter}
+        onEdgeMouseEnter={handleEdgeMouseEnter}
         style={{ cursor: eraserMode ? "crosshair" : "default" }}
       >
         <DraggablePanel />
         <Background />
         <UndoRedo />
         <Controls />
-        {menu && <ContextMenu {...menu} />}
       </ReactFlow>
-      <EditNodeForm />
     </div>
   );
 }
