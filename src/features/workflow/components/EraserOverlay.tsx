@@ -83,7 +83,7 @@ export const EraserOverlay: React.FC<EraserOverlayProps> = ({
 
   return (
     <div
-      className="absolute inset-0 z-40"
+      className={`absolute inset-0 ${isDrawing ? "z-30" : "z-10 pointer-events-none"}`}
       onMouseDown={startStroke}
       onMouseMove={moveStroke}
       onMouseUp={handleMouseUp}
