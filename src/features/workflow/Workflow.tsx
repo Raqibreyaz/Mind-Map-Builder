@@ -4,7 +4,6 @@ import {
   Connection,
   Controls,
   Edge,
-  Node,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
@@ -70,7 +69,7 @@ function DnDFlow() {
         x: clientX,
         y: clientY,
       });
-      addNewNode(nodeType, position);
+      addNewNode(nodeType || undefined, position);
       setNodeType(null);
     },
     [screenToFlowPosition, nodeType, addNewNode, setNodeType]

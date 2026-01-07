@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { Node, Edge, useReactFlow, useKeyPress } from "@xyflow/react";
+import { Node, Edge, useReactFlow } from "@xyflow/react";
 
 interface UseEraserModeProps {
   removeNode: (nodeId: string) => void;
@@ -11,7 +11,7 @@ export const useEraserMode = ({ removeNode, removeEdge }: UseEraserModeProps) =>
   const { getNodes, getEdges, setNodes, setEdges } = useReactFlow();
   
   // Toggle eraser mode with 'e' key
-  const eraserKeyPressed = useKeyPress("e");
+  // const eraserKeyPressed = useKeyPress("e");
   
   const toggleEraserMode = useCallback(() => {
     setEraserMode((prev) => !prev);

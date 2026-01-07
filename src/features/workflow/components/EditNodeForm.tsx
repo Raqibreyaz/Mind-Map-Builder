@@ -83,7 +83,7 @@ export const EditNodeForm = memo(() => {
   const stickers = getAllStickers();
   const selectedShape = form.watch('shapeType') as ShapeType;
   const selectedSticker = form.watch('sticker') as StickerType | null;
-  const selectedColor = form.watch('customColor') as string | null;
+  // const selectedColor = form.watch('customColor') as string | null;
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>

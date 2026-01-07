@@ -10,12 +10,13 @@ import {
   OnNodesChange,
   reconnectEdge,
 } from "@xyflow/react";
-import { initialEdges, initialNodes } from "../constants";
+// import { initialEdges, initialNodes } from "../constants";
 import {
   createNode,
   validateNodes,
   areFlowStatesEqual,
 } from "../utils/nodes.utils";
+import { ShapeType } from "../constants/shape-config";
 
 interface WorkflowState {
   nodes: Node[];
@@ -30,7 +31,7 @@ interface WorkflowState {
   onNodesChange: OnNodesChange<Node>;
   onEdgesChange: OnEdgesChange<Edge>;
   addNewNode: (
-    nodeType: string | undefined,
+    nodeType: ShapeType | undefined,
     position: { x: number; y: number }
   ) => void;
   addNewEdge: (connection: Connection) => void;

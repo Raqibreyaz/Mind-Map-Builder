@@ -3,16 +3,13 @@ import {
   ReactFlow,
   Controls,
   Background,
-  useNodesState,
-  useEdgesState,
-  addEdge,
   Connection,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { useWorkflowStore } from "@/features/workflow/store/use-flow-store";
+import { useWorkflowStore } from "@/features/workflow/state/use-flow-store";
 import { WorkflowNode } from "./WorkflowNode";
 import { ExportButton } from "./ExportButton";
-import { useExportGraph } from "./hooks/useExportGraph";
+import { useExportGraph } from "../hooks/useExportGraph";
 
 /**
  * Canvas Component with Export Functionality
