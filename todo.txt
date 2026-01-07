@@ -1,4 +1,7 @@
-- create a rectangle component when clicking + dragging the cursor
+- on excessive text it goes out of the component, it should be inside the component but size of comonent might be increased for that
+- currently text node only get created when double click on component, but it should be created wherever double click happens and with dynamic sizing 
+
+- when clicking + dragging the cursor , create a new component with the shape chosen in the tool pallete of the size according to the cursor dragging
 
 - we can add text anaywhere in the canvas just like we do in excalidraw
 
@@ -6,10 +9,10 @@
 
 - the resizable box should only do resizing, for taking and originating edge it should be the work of component so edges should go to component directly not the resizer box
 
-- the names inside the component should also increase or decrease according to the components size
+- the names inside the component should also increase or decrease according to the components size, currently components cannot be created smaller much, so reduce their min limit and make them be smaller while resizing
 
-- currently components cannot be created smaller much, so reduce their min limit and make them be smaller while resizing
+- while editing the name of the component the input is ruining the experience by stretching the size of component and showing input's border, so make it dont get stretched, and dont show the input or its border, the editing should be done exactly like how excalidraw and other tools provide
 
 - making the tool bar efficient by design + all the shapes required for a system design architecture
 
-- while editing the name of the component the input is ruining the experience by stretching the size of component and showing input's border, so make it dont get stretched, and dont show the input or its border, the editing should be done exactly like how excalidraw and other tools provide
+- shortcuts for theme, eraser etc.

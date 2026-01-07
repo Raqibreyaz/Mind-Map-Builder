@@ -1,4 +1,5 @@
 import { ErasableNode } from "@/features/workflow/components/ErasableNode";
+import { ErasableTextNode } from "@/features/workflow/components/ErasableTextNode";
 import { ErasableEdge } from "@/features/workflow/components/ErasableEdge";
 import { Edge, MarkerType, Node } from "@xyflow/react";
 import {
@@ -12,6 +13,7 @@ export const initialEdges: Edge[] = getSavedEdges();
 
 export const nodeTypes = {
   WorkflowNode: ErasableNode,
+  TextNode: ErasableTextNode,
 };
 
 export const edgeTypes = {

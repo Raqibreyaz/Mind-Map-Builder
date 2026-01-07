@@ -93,3 +93,35 @@ export const getNodeColor = (nodeData: any): string => {
   const shapeConfig = getShapeConfig(nodeData.shapeType || DEFAULT_SHAPE_TYPE);
   return shapeConfig.color;
 };
+
+/**
+ * Create a standalone text node
+ */
+export const createTextNode = (
+  position: XYPosition,
+  text: string = "",
+  options?: {
+    fontSize?: number;
+    fontColor?: string;
+    isNew?: boolean;
+    width?: number;
+    height?: number;
+  }
+): Node => {
+  const node: Node = {
+    id: uuid(),
+    type: "TextNode",
+    position,
+    data: {
+      text,
+      fontSize: options?.fontSize || 14,
+      fontColor: options?.fontColor || "#1f2937",
+      isNew: options?.isNew ?? true, // Start in edit mode by default
+    },
+    style: {
+      width: options?.width || 150,
+      height: options?.height || 40,
+    },
+  };
+  return node;
+};

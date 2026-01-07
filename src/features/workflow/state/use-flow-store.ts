@@ -13,6 +13,7 @@ import {
 // import { initialEdges, initialNodes } from "../constants";
 import {
   createNode,
+  createTextNode,
   validateNodes,
   areFlowStatesEqual,
 } from "../utils/nodes.utils";
@@ -34,16 +35,11 @@ interface WorkflowState {
     nodeType: ShapeType | undefined,
     position: { x: number; y: number }
   ) => void;
+  addTextNode: (position: { x: number; y: number }, text?: string) => void;
   addNewEdge: (connection: Connection) => void;
   updateNode: (
     nodeId: string | null,
-    data: {
-      name?: string;
-      label?: string;
-      color?: string;
-      customColor?: string;
-      sticker?: string;
-    }
+    data: Record<string, unknown>
   ) => void;
   removeEdge: (edgeId: string | null) => void;
   removeNode: (nodeId: string | null) => void;
@@ -149,6 +145,15 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     set((state) => {
       const nodes = [...state.nodes, newNode];
       state.setNodes(validateNodes(nodes, state.edges));
+      return {};
+    });
+  },
+
+  addTextNode: (position, text = "") => {
+    const newNode = createTextNode(position, text, { isNew: true });
+    set((state) => {
+      const nodes = [...state.nodes, newNode];
+      state.setNodes(nodes, state.edges);
       return {};
     });
   },

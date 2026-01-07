@@ -43,6 +43,7 @@ function DnDFlow() {
     setNodes,
     setEdges,
     addNewNode,
+    addTextNode,
     addNewEdge,
     removeEdge,
     removeNode,
@@ -103,6 +104,20 @@ function DnDFlow() {
   const onPaneClick = useCallback(() => {
     // Clear any selections when clicking on empty canvas
   }, []);
+
+  // Handle double-click on empty canvas to create text node
+  const onPaneDoubleClick = useCallback(
+    (event: React.MouseEvent) => {
+      if (eraserMode) return; // Don't create text in eraser mode
+      
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+      addTextNode(position);
+    },
+    [screenToFlowPosition, addTextNode, eraserMode]
+  );
 
   // Handle eraser stroke with geometric intersection in flow coordinates
   const handleEraserStroke = useCallback(
@@ -165,8 +180,9 @@ function DnDFlow() {
         onReconnectEnd={onReconnectEnd}
         onReconnect={onReconnect}
         onPaneClick={onPaneClick}
+        onDoubleClick={onPaneDoubleClick}
         colorMode={isDarkMode ? "dark" : "light"}
-        style={{ cursor: eraserMode ? eraserCursor : "default" }} // <- ADD THIS LINE
+        style={{ cursor: eraserMode ? eraserCursor : "default" }}
       >
         {/* Eraser overlay should not block panels - put panels at higher z-index */}
         <div className="absolute top-4 left-4 z-50" data-no-erase>
@@ -175,7 +191,7 @@ function DnDFlow() {
 
         <Background />
 
-        <div className="absolute top-4 right-4 z-50" data-no-erase>
+        <div className="z-50" data-no-erase>
           <UndoRedo />
         </div>
         

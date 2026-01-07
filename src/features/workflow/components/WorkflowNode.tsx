@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useCallback, useState, useRef, useEffect } from "react";
 import { Handle, NodeResizer, Position } from "@xyflow/react";
 import {
   ShapeType,
@@ -109,21 +109,46 @@ export const WorkflowNode: React.FC<CustomNodeProps> = ({ data, isConnectable, s
   const updateNode = useWorkflowStore((state) => state.updateNode);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(data.name);
+  const editableRef = useRef<HTMLDivElement>(null);
 
-  const handleTextClick = useCallback(
-    (event: React.MouseEvent) => {
-      event.stopPropagation();
-      setEditValue(data.name);
-      setIsEditing(true);
-    },
-    [data.name]
-  );
+  // Focus the editable when entering edit mode
+  useEffect(() => {
+    if (isEditing && editableRef.current) {
+      editableRef.current.focus();
+      // Select all text
+      const range = document.createRange();
+      range.selectNodeContents(editableRef.current);
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+    }
+  }, [isEditing]);
 
-  const handleEditSubmit = useCallback(() => {
-    updateNode(id, { name: editValue });
+  const handleDoubleClick = useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    setIsEditing(true);
+  }, []);
+
+  const handleBlur = useCallback(() => {
+    if (editableRef.current) {
+      const newName = editableRef.current.textContent?.trim() || data.name;
+      updateNode(id, { name: newName });
+    }
     setIsEditing(false);
-  }, [id, editValue, updateNode]);
+  }, [id, data.name, updateNode]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleBlur();
+    }
+    if (e.key === "Escape") {
+      if (editableRef.current) {
+        editableRef.current.textContent = data.name;
+      }
+      setIsEditing(false);
+    }
+  }, [data.name, handleBlur]);
 
   const handleColorChange = useCallback(
     (newColor: string) => {
@@ -173,32 +198,27 @@ export const WorkflowNode: React.FC<CustomNodeProps> = ({ data, isConnectable, s
         <ShapeRenderer shapeType={shapeType} color={color} />
       </div>
 
-      {/* TEXT / INLINE EDITOR */}
-      {isEditing ? (
-        <input
-          autoFocus
-          value={editValue}
-          onChange={(e) => setEditValue(e.target.value)}
-          onBlur={handleEditSubmit}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleEditSubmit();
-            if (e.key === "Escape") {
-              setEditValue(data.name);
-              setIsEditing(false);
-            }
-          }}
-          className="relative z-10 text-center max-w-[85%] font-medium text-[clamp(11px,2vw,14px)] leading-tight px-1 py-0.5 rounded border bg-white/90 outline-none"
-          style={{ color, borderColor: color }}
-        />
-      ) : (
-        <div
-          onDoubleClick={handleTextClick}
-          className="relative z-[1] text-center max-w-[85%] max-h-[85%] font-medium text-[clamp(11px,2vw,14px)] leading-tight break-words flex items-center justify-center cursor-text select-text overflow-hidden m-0 p-2"
-          style={{ color }}
-        >
-          {data.name}
-        </div>
-      )}
+      {/* INVISIBLE AUTO-SIZING TEXT */}
+      <div
+        ref={editableRef}
+        contentEditable={isEditing}
+        suppressContentEditableWarning
+        onDoubleClick={handleDoubleClick}
+        onBlur={handleBlur}
+        onKeyDown={isEditing ? handleKeyDown : undefined}
+        className="relative z-[1] text-center max-w-[85%] font-medium text-[clamp(11px,2vw,14px)] leading-tight break-words cursor-text select-text overflow-hidden m-0 p-1"
+        style={{
+          color,
+          outline: "none",
+          border: "none",
+          background: "transparent",
+          minWidth: "20px",
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
+        }}
+      >
+        {data.name}
+      </div>
 
       {/* Sticker Badge (Bottom Right) */}
       {data.sticker && (
