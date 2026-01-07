@@ -108,8 +108,10 @@ function DnDFlow() {
   // Handle double-click on empty canvas to create text node
   const onPaneDoubleClick = useCallback(
     (event: React.MouseEvent) => {
-      if (eraserMode) return; // Don't create text in eraser mode
-      
+      // Don't create text in eraser mode or double clicked on a node
+      const target = event.target as HTMLElement;
+      if (eraserMode || target.closest(".react-flow__node")) return;
+
       const position = screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
@@ -182,6 +184,7 @@ function DnDFlow() {
         onPaneClick={onPaneClick}
         onDoubleClick={onPaneDoubleClick}
         colorMode={isDarkMode ? "dark" : "light"}
+        zoomOnDoubleClick={false}
         style={{ cursor: eraserMode ? eraserCursor : "default" }}
       >
         {/* Eraser overlay should not block panels - put panels at higher z-index */}
@@ -194,7 +197,7 @@ function DnDFlow() {
         <div className="z-50" data-no-erase>
           <UndoRedo />
         </div>
-        
+
         <Controls position="bottom-right" />
 
         {eraserMode && (

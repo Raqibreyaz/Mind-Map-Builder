@@ -206,7 +206,7 @@ export const WorkflowNode: React.FC<CustomNodeProps> = ({ data, isConnectable, s
         onDoubleClick={handleDoubleClick}
         onBlur={handleBlur}
         onKeyDown={isEditing ? handleKeyDown : undefined}
-        className="relative z-[1] text-center max-w-[85%] font-medium text-[clamp(11px,2vw,14px)] leading-tight break-words cursor-text select-text overflow-hidden m-0 p-1"
+        className="relative z-[1] text-center max-w-[85%] font-medium text-[clamp(11px,2vw,14px)] leading-relaxed break-words cursor-text select-text overflow-hidden m-0 p-1"
         style={{
           color,
           outline: "none",

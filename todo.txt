@@ -1,9 +1,9 @@
-- on excessive text it goes out of the component, it should be inside the component but size of comonent might be increased for that
-- currently text node only get created when double click on component, but it should be created wherever double click happens and with dynamic sizing 
+- we can add text anywhere in the canvas just like we do in excalidraw
+=> currently have issues like it should increase width according to text but it is already taking much space with few chars
+
+- on excessive text it goes out of the component, it should be inside the component but size of component might be increased for that
 
 - when clicking + dragging the cursor , create a new component with the shape chosen in the tool pallete of the size according to the cursor dragging
-
-- we can add text anaywhere in the canvas just like we do in excalidraw
 
 - remove '.' handles to floating edge so that they can stick to anywhere in the component
 
@@ -11,8 +11,20 @@
 
 - the names inside the component should also increase or decrease according to the components size, currently components cannot be created smaller much, so reduce their min limit and make them be smaller while resizing
 
-- while editing the name of the component the input is ruining the experience by stretching the size of component and showing input's border, so make it dont get stretched, and dont show the input or its border, the editing should be done exactly like how excalidraw and other tools provide
-
 - making the tool bar efficient by design + all the shapes required for a system design architecture
 
+- duplicating node when ctrl at hold + dragging a node
+
 - shortcuts for theme, eraser etc.
+
+- adding pen feature to write free hand
+
+- can change edge type (flowing,static etc.)
+
+- easy connect + floating edge, edge will not require a handle and can be easily originated
+
+- label on edge showing tasks of system design(request, read/write)
+
+- downloading the architecture as image(only frontend usage)
+
+- stickers functionality for nodes + extending the count of stickers dynamically

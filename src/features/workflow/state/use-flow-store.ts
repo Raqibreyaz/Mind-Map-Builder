@@ -37,13 +37,14 @@ interface WorkflowState {
   ) => void;
   addTextNode: (position: { x: number; y: number }, text?: string) => void;
   addNewEdge: (connection: Connection) => void;
-  updateNode: (
-    nodeId: string | null,
-    data: Record<string, unknown>
-  ) => void;
+  updateNode: (nodeId: string | null, data: Record<string, unknown>) => void;
   removeEdge: (edgeId: string | null) => void;
   removeNode: (nodeId: string | null) => void;
   reconnectOldEdge: (oldEdge: Edge, newConnection: Connection) => void;
+  updateNodeDimensions: (
+    nodeId: string,
+    dimensions: { width: number; height: number }
+  ) => void;
 }
 
 // Helper function to get node color (matches WorkflowNode.tsx logic)
@@ -270,5 +271,16 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
       state.setEdges(updatedEdges);
       return {};
     });
+  },
+
+  updateNodeDimensions: (
+    nodeId: string,
+    dimensions: { width: number; height: number }
+  ) => {
+    set((state) => ({
+      nodes: state.nodes.map((node) =>
+        node.id === nodeId ? { ...node, ...dimensions } : node
+      ),
+    }));
   },
 }));
