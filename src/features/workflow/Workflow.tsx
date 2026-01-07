@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import {
   Background,
   Connection,
@@ -25,6 +25,11 @@ import {
 import { UndoRedo } from "./components/UndoRedo";
 import { useWorkflowStore } from "./state/use-flow-store";
 import { useCanvasUiStore } from "./state/use-canvas-ui-store";
+import { EraserOverlay, Point } from "@/features/workflow/components/EraserOverlay";
+import {
+  checkEdgeIntersection,
+  checkNodeIntersection,
+} from "@/features/workflow/utils/eraser.utils";
 
 function DnDFlow() {
   const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
@@ -48,8 +53,6 @@ function DnDFlow() {
   const [nodeType, setNodeType] = useNodeType();
   const eraserMode = useCanvasUiStore((state) => state.eraserMode);
   const isDarkMode = useCanvasUiStore((state) => state.isDarkMode);
-
-  const [isMouseDown, setIsMouseDown] = useState(false);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -95,58 +98,43 @@ function DnDFlow() {
     [removeEdge]
   );
 
-  // Eraser mode: click or rub-to-erase behavior
-  const onNodeClick = useCallback(
-    (event: React.MouseEvent, node: Node) => {
-      if (!eraserMode) return;
-      event.preventDefault();
-      event.stopPropagation();
-      removeNode(node.id);
-    },
-    [eraserMode, removeNode]
-  );
-
-  const onEdgeClick = useCallback(
-    (event: React.MouseEvent, edge: Edge) => {
-      if (!eraserMode) return;
-      event.preventDefault();
-      event.stopPropagation();
-      removeEdge(edge.id);
-    },
-    [eraserMode, removeEdge]
-  );
-
-  const onNodeMouseEnter = useCallback(
-    (event: React.MouseEvent, node: Node) => {
-      if (!eraserMode || !isMouseDown) return;
-      event.preventDefault();
-      event.stopPropagation();
-      removeNode(node.id);
-    },
-    [eraserMode, isMouseDown, removeNode]
-  );
-
-  const onEdgeMouseEnter = useCallback(
-    (event: React.MouseEvent, edge: Edge) => {
-      if (!eraserMode || !isMouseDown) return;
-      event.preventDefault();
-      event.stopPropagation();
-      removeEdge(edge.id);
-    },
-    [eraserMode, isMouseDown, removeEdge]
-  );
-
   const onPaneClick = useCallback(() => {
     // Clear any selections when clicking on empty canvas
   }, []);
+
+  // Handle eraser stroke with geometric intersection in flow coordinates
+  const handleEraserStroke = useCallback(
+    (screenTrail: Point[]) => {
+      if (screenTrail.length === 0) return;
+
+      // Convert screen coordinates to flow coordinates
+      const trailInFlow = screenTrail.map((p) =>
+        screenToFlowPosition({ x: p.x, y: p.y })
+      );
+
+      const nodesToDelete = nodes.filter((node) =>
+        checkNodeIntersection(node, trailInFlow)
+      );
+
+      const edgesToDelete = edges.filter((edge) =>
+        checkEdgeIntersection(edge, trailInFlow, nodes)
+      );
+
+      // Batch delete all intersecting elements
+      nodesToDelete.forEach((node) => removeNode(node.id));
+      edgesToDelete.forEach((edge) => removeEdge(edge.id));
+    },
+    [nodes, edges, removeNode, removeEdge, screenToFlowPosition]
+  );
 
   useEffect(() => {
     setNodes(initialNodes);
     setEdges(initialEdges);
   }, [setNodes, setEdges]);
 
-  const eraserCursor =
-    'url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22%3E%3Cpath fill=%22%23ef4444%22 d=%22M16.24 3.56l4.95 4.94c.78.79.78 2.05 0 2.84L12 20.53a4.008 4.008 0 0 1-5.66 0L2.81 17c-.78-.79-.78-2.05 0-2.84l10.6-10.6c.79-.78 2.05-.78 2.83 0zM5.93 17.57l3.53-3.53 2.12 2.12-3.54 3.53a1.003 1.003 0 0 1-1.42 0 1.003 1.003 0 0 1 0-1.42z%22/%3E%3C/svg%3E") 12 12, crosshair';
+  const containerBounds = reactFlowWrapper.current
+    ? reactFlowWrapper.current.getBoundingClientRect()
+    : null;
 
   return (
     <div
@@ -154,9 +142,6 @@ function DnDFlow() {
         isDarkMode ? "bg-gray-900" : "bg-white"
       }`}
       ref={reactFlowWrapper}
-      onMouseDown={() => setIsMouseDown(true)}
-      onMouseUp={() => setIsMouseDown(false)}
-      onMouseLeave={() => setIsMouseDown(false)}
     >
       <ReactFlow
         fitView
@@ -174,18 +159,19 @@ function DnDFlow() {
         onReconnectEnd={onReconnectEnd}
         onReconnect={onReconnect}
         onPaneClick={onPaneClick}
-        onNodeClick={onNodeClick}
-        onEdgeClick={onEdgeClick}
-        onNodeMouseEnter={onNodeMouseEnter}
-        onEdgeMouseEnter={onEdgeMouseEnter}
-        style={{ cursor: eraserMode ? eraserCursor : "default" }}
         colorMode={isDarkMode ? "dark" : "light"}
-        debug
       >
         <DraggablePanel />
         <Background />
         <UndoRedo />
         <Controls position="bottom-right" />
+
+        {eraserMode && (
+          <EraserOverlay
+            onStrokeEnd={handleEraserStroke}
+            containerBounds={containerBounds}
+          />
+        )}
       </ReactFlow>
     </div>
   );

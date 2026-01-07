@@ -1,4 +1,5 @@
-import {WorkflowNode  } from "@/features/workflow/components/WorkflowNode";
+import { ErasableNode } from "@/features/workflow/components/ErasableNode";
+import { ErasableEdge } from "@/features/workflow/components/ErasableEdge";
 import { Edge, MarkerType, Node } from "@xyflow/react";
 import {
   getSavedEdges,
@@ -10,10 +11,13 @@ export const initialNodes: Node[] = getSavedNodes();
 export const initialEdges: Edge[] = getSavedEdges();
 
 export const nodeTypes = {
-  WorkflowNode,
+  WorkflowNode: ErasableNode,
 };
 
-export const edgeTypes = {};
+export const edgeTypes = {
+  floating: ErasableEdge,
+  default: ErasableEdge,
+};
 
 export const defaultNodeOptions = {};
 export const defaultEdgeOptions = {
@@ -25,4 +29,4 @@ export const defaultEdgeOptions = {
 export const snapGrid: [number, number] = [20, 20];
 
 // Default shape type for new nodes
-export const DEFAULT_SHAPE_TYPE: ShapeType = 'rectangle';
+export const DEFAULT_SHAPE_TYPE: ShapeType = "rectangle";
