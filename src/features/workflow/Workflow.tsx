@@ -179,14 +179,13 @@ function DnDFlow() {
         onNodeMouseEnter={onNodeMouseEnter}
         onEdgeMouseEnter={onEdgeMouseEnter}
         style={{ cursor: eraserMode ? eraserCursor : "default" }}
+        colorMode={isDarkMode ? "dark" : "light"}
+        debug
       >
         <DraggablePanel />
-        <Background
-          color={isDarkMode ? "#4b5563" : "#e5e7eb"}
-          className={isDarkMode ? "bg-gray-900" : "bg-gray-50"}
-        />
+        <Background />
         <UndoRedo />
-        <Controls className={isDarkMode ? "bg-gray-800 text-white" : ""} />
+        <Controls position="bottom-right" />
       </ReactFlow>
     </div>
   );
