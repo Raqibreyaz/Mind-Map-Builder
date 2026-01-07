@@ -24,7 +24,10 @@ import {
 import { UndoRedo } from "./components/UndoRedo";
 import { useWorkflowStore } from "./state/use-flow-store";
 import { useCanvasUiStore } from "./state/use-canvas-ui-store";
-import { EraserOverlay, Point } from "@/features/workflow/components/EraserOverlay";
+import {
+  EraserOverlay,
+  Point,
+} from "@/features/workflow/components/EraserOverlay";
 import {
   checkEdgeIntersection,
   checkNodeIntersection,
@@ -135,6 +138,10 @@ function DnDFlow() {
     ? reactFlowWrapper.current.getBoundingClientRect()
     : null;
 
+  // Add this eraser cursor SVG
+  const eraserCursor =
+    'url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22%3E%3Cpath fill=%22%23ef4444%22 d=%22M16.24 3.56l4.95 4.94c.78.79.78 2.05 0 2.84L12 20.53a4.008 4.008 0 0 1-5.66 0L2.81 17c-.78-.79-.78-2.05 0-2.84l10.6-10.6c.79-.78 2.05-.78 2.83 0zM5.93 17.57l3.53-3.53 2.12 2.12-3.54 3.53a1.003 1.003 0 0 1-1.42 0 1.003 1.003 0 0 1 0-1.42z%22/%3E%3C/svg%3E") 12 12, crosshair';
+
   return (
     <div
       className={`relative h-screen w-full border ${
@@ -159,10 +166,19 @@ function DnDFlow() {
         onReconnect={onReconnect}
         onPaneClick={onPaneClick}
         colorMode={isDarkMode ? "dark" : "light"}
+        style={{ cursor: eraserMode ? eraserCursor : "default" }} // <- ADD THIS LINE
       >
-        <DraggablePanel />
+        {/* Eraser overlay should not block panels - put panels at higher z-index */}
+        <div className="absolute top-4 left-4 z-50" data-no-erase>
+          <DraggablePanel />
+        </div>
+
         <Background />
-        <UndoRedo />
+
+        <div className="absolute top-4 right-4 z-50" data-no-erase>
+          <UndoRedo />
+        </div>
+        
         <Controls position="bottom-right" />
 
         {eraserMode && (

@@ -19,6 +19,18 @@ export const EraserOverlay: React.FC<EraserOverlayProps> = ({
   const startStroke = useCallback(
     (e: React.MouseEvent) => {
       if (!containerBounds) return;
+      
+      // Check if click is on UI elements (ignore if target has data-no-erase or is a button)
+      const target = e.target as HTMLElement;
+      if (
+        target.closest('button') ||
+        target.closest('[data-no-erase]') ||
+        target.closest('.react-flow__panel') ||
+        target.closest('.react-flow__controls')
+      ) {
+        return; // Don't start erasing on UI elements
+      }
+
       e.preventDefault();
       e.stopPropagation();
       const point = { x: e.clientX, y: e.clientY };
@@ -37,7 +49,7 @@ export const EraserOverlay: React.FC<EraserOverlayProps> = ({
         const last = prev[prev.length - 1];
         const dx = point.x - last.x;
         const dy = point.y - last.y;
-        if (dx * dx + dy * dy < 16) return prev; // downsample: 4px threshold
+        if (dx * dx + dy * dy < 16) return prev;
         return [...prev, point];
       });
     },
@@ -58,11 +70,12 @@ export const EraserOverlay: React.FC<EraserOverlayProps> = ({
 
   const handleMouseUp = useCallback(
     (e: React.MouseEvent) => {
+      if (!isDrawing) return;
       e.preventDefault();
       e.stopPropagation();
       finishStroke();
     },
-    [finishStroke]
+    [isDrawing, finishStroke]
   );
 
   const handleMouseLeave = useCallback(() => {
@@ -82,37 +95,49 @@ export const EraserOverlay: React.FC<EraserOverlayProps> = ({
   const lastPoint = trail[trail.length - 1];
 
   return (
-    <div
-      className={`absolute inset-0 ${isDrawing ? "z-30" : "z-10 pointer-events-none"}`}
-      onMouseDown={startStroke}
-      onMouseMove={moveStroke}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseLeave}
-    >
-      {trail.length > 0 && (
-        <svg className="absolute inset-0 pointer-events-none">
-          <path
-            d={pathD}
-            stroke="#ef4444"
-            strokeWidth={eraserWidth}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-            opacity={0.5}
-          />
-        </svg>
-      )}
-      {isDrawing && lastPoint && (
+    <>
+      {/* Event capture layer - only active to start drawing */}
+      <div
+        className="absolute inset-0 z-10 pointer-events-auto"
+        onMouseDown={startStroke}
+        style={{ background: 'transparent' }}
+      />
+      
+      {/* Visual layer - shows trail, doesn't block anything */}
+      {isDrawing && (
         <div
-          className="absolute rounded-full bg-red-500 opacity-60 pointer-events-none"
-          style={{
-            width: eraserWidth,
-            height: eraserWidth,
-            left: lastPoint.x - containerBounds.left - eraserWidth / 2,
-            top: lastPoint.y - containerBounds.top - eraserWidth / 2,
-          }}
-        />
+          className="absolute inset-0 z-30 pointer-events-auto"
+          onMouseMove={moveStroke}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseLeave}
+          style={{ background: 'transparent' }}
+        >
+          {trail.length > 0 && (
+            <svg className="absolute inset-0 pointer-events-none">
+              <path
+                d={pathD}
+                stroke="#ef4444"
+                strokeWidth={eraserWidth}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+                opacity={0.5}
+              />
+            </svg>
+          )}
+          {lastPoint && (
+            <div
+              className="absolute rounded-full bg-red-500 opacity-60 pointer-events-none"
+              style={{
+                width: eraserWidth,
+                height: eraserWidth,
+                left: lastPoint.x - containerBounds.left - eraserWidth / 2,
+                top: lastPoint.y - containerBounds.top - eraserWidth / 2,
+              }}
+            />
+          )}
+        </div>
       )}
-    </div>
+    </>
   );
 };
