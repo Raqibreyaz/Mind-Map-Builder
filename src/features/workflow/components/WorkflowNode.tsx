@@ -114,12 +114,19 @@ export const WorkflowNode: React.FC<CustomNodeProps> = ({ data, isConnectable, s
   // Focus the editable when entering edit mode
   useEffect(() => {
     if (isEditing && editableRef.current) {
+
+      // make focus here, to avoid manually clicking to type
       editableRef.current.focus();
+      
       // Select all text
       const range = document.createRange();
       range.selectNodeContents(editableRef.current);
+
+      // get and clear browsers current text selection
       const sel = window.getSelection();
       sel?.removeAllRanges();
+
+      // highlight entire editable content
       sel?.addRange(range);
     }
   }, [isEditing]);

@@ -1,14 +1,14 @@
 - feature: adding shapes instead of typical start,decision,task nodes
-- approach: 
+- approach: shapes are just SVGs rendered with given color and size
 
 - feature: adding color picker on the node to change colors effortlessly
-- approach:
+- approach: just a simple "div" above the node, where on clicking a color updates the node by the selected color
 
 - feature: resizing functionality of node
-- approach: 
+- approach: using the "NodeResizer" built in component
 
-- feature: double clicking the node can edit the text inside initialEdges
-- approach: 
+- feature: double clicking the node can edit the text inside it
+- approach: make the "div" editable by "double-click" event on it, and 
 
 - issue: getting "initialNodes and initialEdges usage before initialisation" where these were imported
 - fix: added initialisation in useEffect when these become available on first render

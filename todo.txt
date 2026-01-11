@@ -28,3 +28,5 @@
 - downloading the architecture as image(only frontend usage)
 
 - stickers functionality for nodes + extending the count of stickers dynamically
+
+- optimise re-renders by managing states like giving new name to component for each char it calls updateNode
