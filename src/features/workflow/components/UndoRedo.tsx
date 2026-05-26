@@ -31,7 +31,7 @@ export const UndoRedo = () => {
         onClick={undo}
         size={"icon"}
         variant={"outline"}
-        className="bg-gray-300"
+        className="bg-gray-300 dark:bg-gray-800"
       >
         <UndoIcon />
       </Button>
@@ -39,7 +39,7 @@ export const UndoRedo = () => {
         onClick={redo}
         size={"icon"}
         variant={"outline"}
-        className="bg-gray-300"
+        className="bg-gray-300 dark:bg-gray-800"
       >
         <RedoIcon />
       </Button>

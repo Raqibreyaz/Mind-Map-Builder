@@ -11,8 +11,9 @@
 // }));
 
 import { createContext, ReactNode, useContext, useState } from "react";
+import { ShapeType } from "../constants/shape-config";
 
-type NodeTypeProps = [type: string | null, setType: (_: any) => void];
+type NodeTypeProps = [type: ShapeType | null, setType: (_: any) => void];
 
 const DnDContext = createContext<NodeTypeProps>([null, (_) => {}]);
 

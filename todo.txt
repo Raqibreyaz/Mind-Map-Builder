@@ -1,0 +1,32 @@
+- we can add text anywhere in the canvas just like we do in excalidraw
+=> currently have issues like it should increase width according to text but it is already taking much space with few chars
+
+- on excessive text it goes out of the component, it should be inside the component but size of component might be increased for that
+
+- when clicking + dragging the cursor , create a new component with the shape chosen in the tool pallete of the size according to the cursor dragging
+
+- remove '.' handles to floating edge so that they can stick to anywhere in the component
+
+- the resizable box should only do resizing, for taking and originating edge it should be the work of component so edges should go to component directly not the resizer box
+
+- the names inside the component should also increase or decrease according to the components size, currently components cannot be created smaller much, so reduce their min limit and make them be smaller while resizing
+
+- making the tool bar efficient by design + all the shapes required for a system design architecture
+
+- duplicating node when ctrl at hold + dragging a node
+
+- shortcuts for theme, eraser etc.
+
+- adding pen feature to write free hand
+
+- can change edge type (flowing,static etc.)
+
+- easy connect + floating edge, edge will not require a handle and can be easily originated
+
+- label on edge showing tasks of system design(request, read/write)
+
+- downloading the architecture as image(only frontend usage)
+
+- stickers functionality for nodes + extending the count of stickers dynamically
+
+- optimise re-renders by managing states like giving new name to component for each char it calls updateNode

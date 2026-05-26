@@ -1,21 +1,14 @@
-import "@xyflow/react/dist/style.css";
-
+import React, { useCallback, useEffect, useRef } from "react";
 import {
   Background,
   Connection,
   Controls,
   Edge,
-  FinalConnectionState,
-  Node,
-  NodeMouseHandler,
-  Position,
   ReactFlow,
   ReactFlowProvider,
-  reconnectEdge,
   useReactFlow,
 } from "@xyflow/react";
-
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import "@xyflow/react/dist/style.css";
 import { DraggablePanel } from "@/features/workflow/components/DraggablePanel";
 import {
   DnDProvider,
@@ -27,17 +20,22 @@ import {
   initialEdges,
   initialNodes,
   nodeTypes,
-  snapGrid,
 } from "@/features/workflow/constants";
-import { ContextMenu } from "@/features/workflow/components/ContextMenu";
-import { EditNodeForm } from "@/features/workflow/components/EditNodeForm";
-import { useEditNode } from "./state/use-edit-node";
 import { UndoRedo } from "./components/UndoRedo";
 import { useWorkflowStore } from "./state/use-flow-store";
-import { createNode } from "./utils/nodes.utils";
+import { useCanvasUiStore } from "./state/use-canvas-ui-store";
+import {
+  EraserOverlay,
+  Point,
+} from "@/features/workflow/components/EraserOverlay";
+import {
+  checkEdgeIntersection,
+  checkNodeIntersection,
+} from "@/features/workflow/utils/eraser.utils";
 
 function DnDFlow() {
-  const ref = useRef(null);
+  const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
+  const edgeReconnectSuccessful = useRef(true);
 
   const {
     nodes,
@@ -45,68 +43,54 @@ function DnDFlow() {
     setNodes,
     setEdges,
     addNewNode,
+    addTextNode,
     addNewEdge,
     removeEdge,
+    removeNode,
     onNodesChange,
     onEdgesChange,
     reconnectOldEdge,
   } = useWorkflowStore();
 
-  const edgeReconnectSuccessful = useRef(true);
-  const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
-  const setNodeId = useEditNode((state) => state.setNodeId);
-  const [menu, setMenu] = useState<{
-    top: number | undefined;
-    left: number | undefined;
-    bottom: number | undefined;
-    right: number | undefined;
-  } | null>(null);
-
   const { screenToFlowPosition } = useReactFlow();
   const [nodeType, setNodeType] = useNodeType();
+  const eraserMode = useCanvasUiStore((state) => state.eraserMode);
+  const isDarkMode = useCanvasUiStore((state) => state.isDarkMode);
 
-  // make the selected node draggable
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
   }, []);
 
-  // when droping the selected node create the node at there
   const onDrop = useCallback(
     (event: any) => {
       event.preventDefault();
-      // check if the dropped element is valid
-      if (!nodeType) {
-        return;
-      }
+      if (!nodeType) return;
+
       const { clientX, clientY } =
         "changedTouches" in event ? event.changedTouches[0] : event;
-      // taking the drop position
       const position = screenToFlowPosition({
         x: clientX,
         y: clientY,
       });
-      addNewNode(nodeType, position);
+      addNewNode(nodeType || undefined, position);
       setNodeType(null);
     },
-    [screenToFlowPosition, nodeType]
+    [screenToFlowPosition, nodeType, addNewNode, setNodeType]
   );
 
-  // when you drag the edge to connect to other node then this will run
   const onReconnectStart = useCallback(() => {
     edgeReconnectSuccessful.current = false;
   }, []);
 
-  // when you reconnected the edge at somenode or dropped it then this will run
   const onReconnect = useCallback(
     (oldEdge: Edge, newConnection: Connection) => {
       edgeReconnectSuccessful.current = true;
       reconnectOldEdge(oldEdge, newConnection);
     },
-    [reconnectEdge]
+    [reconnectOldEdge]
   );
 
-  // remove the edge if it is not connected at anywhere
   const onReconnectEnd = useCallback(
     (_: any, edge: Edge) => {
       if (!edgeReconnectSuccessful.current) {
@@ -117,94 +101,73 @@ function DnDFlow() {
     [removeEdge]
   );
 
-  const onConnectEnd = useCallback(
-    (event: any, connectionState: FinalConnectionState) => {
-      // when a connection is dropped on the pane it's not valid
-      if (!connectionState.isValid && connectionState.fromNode) {
-        // we need to remove the wrapper bounds, in order to get the correct position
-        const { clientX, clientY } =
-          "changedTouches" in event ? event.changedTouches[0] : event;
+  const onPaneClick = useCallback(() => {
+    // Clear any selections when clicking on empty canvas
+  }, []);
 
-        const position = screenToFlowPosition({
-          x: clientX,
-          y: clientY,
-        });
+  // Handle double-click on empty canvas to create text node
+  const onPaneDoubleClick = useCallback(
+    (event: React.MouseEvent) => {
+      // Don't create text in eraser mode or double clicked on a node
+      const target = event.target as HTMLElement;
+      if (eraserMode || target.closest(".react-flow__node")) return;
 
-        const newNode = createNode("task", position, [0.5, 0.0]);
-
-        addNewNode(newNode.type, newNode.position);
-        addNewEdge({
-          source: connectionState.fromNode.id,
-          target: newNode.id,
-          sourceHandle: Position.Bottom,
-          targetHandle: Position.Top,
-        });
-      }
-    },
-    [screenToFlowPosition]
-  );
-
-  const onNodeContextMenu: NodeMouseHandler<Node> = useCallback(
-    (event, node: Node) => {
-      // Prevent native context menu from showing
-      event.preventDefault();
-
-      // Calculate position of the context menu. We want to make sure it
-      // doesn't get positioned off-screen.
-      const pane = (
-        ref.current as unknown as HTMLDivElement
-      ).getBoundingClientRect();
-      // Define the maximum margin to prevent overflow
-      const margin = 20;
-
-      // Initial values for top and left based on mouse position
-      let top = event.clientY;
-      let left = event.clientX;
-
-      // Ensure the context menu stays within the pane bounds, adjusting if necessary
-
-      // Adjust left (horizontal) positioning if it overflows the right side
-      if (left + margin > pane.width) {
-        left = pane.width - margin;
-      }
-
-      // Adjust top (vertical) positioning if it overflows the bottom side
-      if (top + margin > pane.height) {
-        top = pane.height - margin;
-      }
-
-      // If the menu would overflow the bottom, move it upwards
-      const bottom = pane.height - top < margin ? top - margin : undefined;
-
-      // If the menu would overflow the right, move it to the left
-      const right = pane.width - left < margin ? left - margin : undefined;
-
-      // Set the menu position using top, left, bottom, and right values
-      setMenu({
-        top, // Vertical position
-        left, // Horizontal position
-        bottom, // Vertical overflow handling (if needed)
-        right, // Horizontal overflow handling (if needed)
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
       });
-
-      setNodeId(node.id);
+      addTextNode(position);
     },
-    [setMenu]
+    [screenToFlowPosition, addTextNode, eraserMode]
   );
 
-  // Close the context menu if it's open whenever the window is clicked.
-  const onPaneClick = useCallback(() => setMenu(null), [setMenu]);
+  // Handle eraser stroke with geometric intersection in flow coordinates
+  const handleEraserStroke = useCallback(
+    (screenTrail: Point[]) => {
+      if (screenTrail.length === 0) return;
+
+      // Convert screen coordinates to flow coordinates
+      const trailInFlow = screenTrail.map((p) =>
+        screenToFlowPosition({ x: p.x, y: p.y })
+      );
+
+      const nodesToDelete = nodes.filter((node) =>
+        checkNodeIntersection(node, trailInFlow)
+      );
+
+      const edgesToDelete = edges.filter((edge) =>
+        checkEdgeIntersection(edge, trailInFlow, nodes)
+      );
+
+      // Batch delete all intersecting elements
+      nodesToDelete.forEach((node) => removeNode(node.id));
+      edgesToDelete.forEach((edge) => removeEdge(edge.id));
+    },
+    [nodes, edges, removeNode, removeEdge, screenToFlowPosition]
+  );
 
   useEffect(() => {
     setNodes(initialNodes);
     setEdges(initialEdges);
-  }, []);
+  }, [setNodes, setEdges]);
+
+  const containerBounds = reactFlowWrapper.current
+    ? reactFlowWrapper.current.getBoundingClientRect()
+    : null;
+
+  // Add this eraser cursor SVG
+  const eraserCursor =
+    'url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22%3E%3Cpath fill=%22%23ef4444%22 d=%22M16.24 3.56l4.95 4.94c.78.79.78 2.05 0 2.84L12 20.53a4.008 4.008 0 0 1-5.66 0L2.81 17c-.78-.79-.78-2.05 0-2.84l10.6-10.6c.79-.78 2.05-.78 2.83 0zM5.93 17.57l3.53-3.53 2.12 2.12-3.54 3.53a1.003 1.003 0 0 1-1.42 0 1.003 1.003 0 0 1 0-1.42z%22/%3E%3C/svg%3E") 12 12, crosshair';
 
   return (
-    <div className="h-screen w-full border" ref={reactFlowWrapper}>
+    <div
+      className={`relative h-screen w-full border ${
+        isDarkMode ? "bg-gray-900" : "bg-white"
+      }`}
+      ref={reactFlowWrapper}
+    >
       <ReactFlow
         fitView
-        ref={ref}
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
@@ -218,19 +181,32 @@ function DnDFlow() {
         onReconnectStart={onReconnectStart}
         onReconnectEnd={onReconnectEnd}
         onReconnect={onReconnect}
-        onConnectEnd={onConnectEnd}
         onPaneClick={onPaneClick}
-        onNodeContextMenu={onNodeContextMenu}
-        snapToGrid={true}
-        snapGrid={snapGrid}
+        onDoubleClick={onPaneDoubleClick}
+        colorMode={isDarkMode ? "dark" : "light"}
+        zoomOnDoubleClick={false}
+        style={{ cursor: eraserMode ? eraserCursor : "default" }}
       >
-        <DraggablePanel />
+        {/* Eraser overlay should not block panels - put panels at higher z-index */}
+        <div className="absolute top-4 left-4 z-50" data-no-erase>
+          <DraggablePanel />
+        </div>
+
         <Background />
-        <UndoRedo />
-        <Controls />
-        {menu && <ContextMenu {...menu} />}
+
+        <div className="z-50" data-no-erase>
+          <UndoRedo />
+        </div>
+
+        <Controls position="bottom-right" />
+
+        {eraserMode && (
+          <EraserOverlay
+            onStrokeEnd={handleEraserStroke}
+            containerBounds={containerBounds}
+          />
+        )}
       </ReactFlow>
-      <EditNodeForm />
     </div>
   );
 }

@@ -10,6 +10,7 @@ import { useEditNode } from "../state/use-edit-node";
 import { Button } from "@/components/ui/button";
 import { useWorkflowStore } from "../state/use-flow-store";
 import { useReactFlow } from "@xyflow/react";
+import { ShapeType } from "@/features/workflow/constants/shape-config";
 
 interface ContextMenuProps {
   top: number | undefined;
@@ -40,7 +41,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
       x: (node?.position.x ?? 0) + 50,
       y: (node?.position.y ?? 0) + 50,
     };
-    addNewNode(node?.data.label as string, position);
+    addNewNode((node?.data.shapeType as ShapeType) || 'rectangle', position);
   }, [nodeId, getNode, addNewNode]);
 
   // remove the node with edge

@@ -1,0 +1,27 @@
+- feature: adding shapes instead of typical start,decision,task nodes
+- approach: shapes are just SVGs rendered with given color and size
+
+- feature: adding color picker on the node to change colors effortlessly
+- approach: just a simple "div" above the node, where on clicking a color updates the node by the selected color
+
+- feature: resizing functionality of node
+- approach: using the "NodeResizer" built in component
+
+- feature: double clicking the node can edit the text inside it
+- approach: make the "div" editable by "double-click" event on it, and 
+
+- issue: getting "initialNodes and initialEdges usage before initialisation" where these were imported
+- fix: added initialisation in useEffect when these become available on first render
+
+- feature: eraser mode functionality to erase canvas elements, like drawing,nodes,edges,texts
+- approach:     
+
+- feature: adding dark-mode to the app
+- approach: using "colorMode" prop of 'ReactFlow' built in component(system,light,dark)
+
+
+- feature: on double clicking anywhere on the canvas we can type text
+- approach: on double clicking, create a new text-node of size == '|', will increase size on text size
+
+- issue: on doubling clicking even on a node creates a text-node
+- fix: check where double click done, by if(event.target.closest(".react-flow__node")) means node

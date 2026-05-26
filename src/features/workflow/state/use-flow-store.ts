@@ -10,12 +10,14 @@ import {
   OnNodesChange,
   reconnectEdge,
 } from "@xyflow/react";
-import { initialEdges, initialNodes } from "../constants";
+// import { initialEdges, initialNodes } from "../constants";
 import {
   createNode,
+  createTextNode,
   validateNodes,
   areFlowStatesEqual,
 } from "../utils/nodes.utils";
+import { ShapeType } from "../constants/shape-config";
 
 interface WorkflowState {
   nodes: Node[];
@@ -30,21 +32,32 @@ interface WorkflowState {
   onNodesChange: OnNodesChange<Node>;
   onEdgesChange: OnEdgesChange<Edge>;
   addNewNode: (
-    nodeType: string | undefined,
+    nodeType: ShapeType | undefined,
     position: { x: number; y: number }
   ) => void;
+  addTextNode: (position: { x: number; y: number }, text?: string) => void;
   addNewEdge: (connection: Connection) => void;
-  updateNode: (
-    nodeId: string | null,
-    data: { name: string; label: string }
-  ) => void;
+  updateNode: (nodeId: string | null, data: Record<string, unknown>) => void;
   removeEdge: (edgeId: string | null) => void;
   removeNode: (nodeId: string | null) => void;
   reconnectOldEdge: (oldEdge: Edge, newConnection: Connection) => void;
+  updateNodeDimensions: (
+    nodeId: string,
+    dimensions: { width: number; height: number }
+  ) => void;
 }
+
+// Helper function to get node color (matches WorkflowNode.tsx logic)
+const getNodeDisplayColor = (nodeData: any): string => {
+  if (nodeData.customColor) {
+    return nodeData.customColor;
+  }
+  return nodeData.color || "#3B82F6";
+};
+
 export const useWorkflowStore = create<WorkflowState>((set, get) => ({
-  nodes: initialNodes,
-  edges: initialEdges,
+  edges: [],
+  nodes: [],
   history: [],
   future: [],
 
@@ -137,9 +150,43 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     });
   },
 
+  addTextNode: (position, text = "") => {
+    const newNode = createTextNode(position, text, { isNew: true });
+    set((state) => {
+      const nodes = [...state.nodes, newNode];
+      state.setNodes(nodes, state.edges);
+      return {};
+    });
+  },
+
   addNewEdge: (connection: Connection) => {
     set((state) => {
-      const edges = addEdge(connection, state.edges);
+      // Get source node to inherit its color
+      const sourceNode = state.nodes.find((n) => n.id === connection.source);
+      const sourceColor = sourceNode
+        ? getNodeDisplayColor(sourceNode.data)
+        : "#3B82F6";
+
+      // Create edge with source node's color - COLORFUL EDGES!
+      const edge: Edge = {
+        id: `edge-${connection.source}-${
+          connection.sourceHandle || "default"
+        }-${connection.target}-${
+          connection.targetHandle || "default"
+        }-${Date.now()}`,
+        source: connection.source,
+        target: connection.target,
+        sourceHandle: connection.sourceHandle,
+        targetHandle: connection.targetHandle,
+        animated: true,
+        style: {
+          stroke: sourceColor,
+          strokeWidth: 2.5,
+          opacity: 0.85,
+        },
+      };
+
+      const edges = addEdge(edge, state.edges);
       state.setEdges(edges);
       return {};
     });
@@ -154,10 +201,34 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   },
 
   updateNode: (nodeId, data) => {
-    const nodes = get().nodes.map((node) =>
-      node.id === nodeId ? { ...node, data: { ...node.data, ...data } } : node
-    );
-    get().setNodes(nodes);
+    set((state) => {
+      // Update the node with new data
+      const updatedNodes = state.nodes.map((node) =>
+        node.id === nodeId ? { ...node, data: { ...node.data, ...data } } : node
+      );
+
+      // When node color changes, update all outgoing edges to new color
+      const updatedEdges = state.edges.map((edge) => {
+        if (edge.source === nodeId) {
+          const updatedNode = updatedNodes.find((n) => n.id === nodeId);
+          if (updatedNode) {
+            const newColor = getNodeDisplayColor(updatedNode.data);
+            return {
+              ...edge,
+              style: {
+                ...edge.style,
+                stroke: newColor,
+              },
+            };
+          }
+        }
+        return edge;
+      });
+
+      // Use setNodes to maintain history
+      state.setNodes(updatedNodes, updatedEdges);
+      return {};
+    });
   },
 
   removeNode: (nodeId) => {
@@ -172,9 +243,44 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
 
   reconnectOldEdge: (oldEdge, newConnection) => {
     set((state) => {
+      // Get new source node color for reconnected edge
+      const sourceNode = state.nodes.find((n) => n.id === newConnection.source);
+      const sourceColor = sourceNode
+        ? getNodeDisplayColor(sourceNode.data)
+        : "#3B82F6";
+
       const edges = reconnectEdge(oldEdge, newConnection, state.edges);
-      state.setEdges(edges);
+
+      // Update the reconnected edge with new color
+      const updatedEdges = edges.map((edge) => {
+        if (
+          edge.source === newConnection.source &&
+          edge.target === newConnection.target
+        ) {
+          return {
+            ...edge,
+            style: {
+              ...edge.style,
+              stroke: sourceColor,
+            },
+          };
+        }
+        return edge;
+      });
+
+      state.setEdges(updatedEdges);
       return {};
     });
+  },
+
+  updateNodeDimensions: (
+    nodeId: string,
+    dimensions: { width: number; height: number }
+  ) => {
+    set((state) => ({
+      nodes: state.nodes.map((node) =>
+        node.id === nodeId ? { ...node, ...dimensions } : node
+      ),
+    }));
   },
 }));
